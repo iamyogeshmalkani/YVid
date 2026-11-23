@@ -1,0 +1,30 @@
+{
+  "title": "3 Friends Worth Keeping",
+  "theme": "look.json",
+  "size": "9:16",
+  "voice": "am_michael",
+  "speed": 1.15,
+  "sentenceGap": 0.18,
+  "paragraphGap": 0.35,
+  "music": {
+    "style": "warm",
+    "volume": 0.3
+  },
+  "sfx": "minimal",
+  "captions": false,
+  "camera": "still",
+  "motionBlur": false,
+  "transition": "cut",
+  "cover": 0.5,
+  "lead": 0.05,
+  "hold": 0.8,
+  "end": 0.4,
+  "loudness": -14,
+  "watermark": false,
+  "images": {
+    "model": "perchance"
+  },
+  "fonts": [
+    { "family": "Poppins", "src": "assets/fonts/Poppins-800-latin.woff2", "weight": 800 }
+  ]
+}

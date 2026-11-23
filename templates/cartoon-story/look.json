@@ -1,0 +1,17 @@
+{
+  "extends": "clean",
+  "name": "cartoon-story",
+  "dark": true,
+  "bg": "#000000",
+  "ink": "#ffffff",
+  "muted": "#cfcfcf",
+  "accent": "yellow",
+  "colors": { "yellow": "#f8c61b", "red": "#ff2a2a", "green": "#3ee26a" },
+  "fonts": {
+    "display": { "family": "Poppins", "weight": 800 },
+    "body": { "family": "Poppins", "weight": 800 }
+  },
+  "background": "plain",
+  "music": "warm",
+  "transition": "cut"
+}

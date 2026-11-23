@@ -1,0 +1,44 @@
+{
+  "name": "yvid",
+  "version": "0.1.0",
+  "description": "Cartoon story videos made by your coding agent. Built on explainroo.",
+  "keywords": [
+    "video",
+    "cartoon",
+    "story",
+    "explainer",
+    "agents",
+    "claude-code",
+    "codex"
+  ],
+  "homepage": "https://github.com/iamyogeshmalkani/YVid#readme",
+  "bugs": {
+    "url": "https://github.com/iamyogeshmalkani/YVid/issues"
+  },
+  "type": "module",
+  "bin": {
+    "explainroo": "bin/explainroo.js"
+  },
+  "engines": {
+    "node": ">=20.11"
+  },
+  "license": "MIT",
+  "repository": "github:iamyogeshmalkani/YVid",
+  "dependencies": {
+    "@huggingface/transformers": "3.8.1",
+    "harfbuzzjs": "1.6.2",
+    "kokoro-js": "1.2.1",
+    "mathjax": "4.1.3",
+    "opencc-js": "1.4.2",
+    "phonemizer": "1.2.1",
+    "pinyin-pro": "3.29.4",
+    "playwright-core": "1.63.0",
+    "roughjs": "4.6.6"
+  },
+  "devDependencies": {
+    "lucide-static": "1.48.0"
+  },
+  "overrides": {
+    "sharp": "^0.35.5"
+  }
+}
