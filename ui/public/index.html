@@ -21,6 +21,7 @@
     --shadow: 0 18px 50px rgba(20, 24, 31, 0.08);
   }
   * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
   html, body {
     margin: 0; color: var(--ink);
     font: 15.5px/1.5 "IBM Plex Sans", system-ui, sans-serif;
@@ -242,11 +243,11 @@
         </div>
       </div>
       <label class="field"><span>Voice</span><select id="voice"></select></label>
-      <input type="hidden" id="images" value="perchance">
-      <div class="field" id="picsField">
-        <span class="lbl">Pictures</span>
-        <div class="picnote" id="imgModeNote"><strong>Perchance</strong> — free AI stills in Chrome. Code-explainer draws frames itself and skips this.</div>
-      </div>
+    </div>
+    <input type="hidden" id="images" value="perchance">
+    <div class="field" id="picsField">
+      <span class="lbl">Pictures</span>
+      <div class="picnote" id="imgModeNote"><strong>Perchance</strong> — free AI stills in Chrome. Code-explainer draws frames itself and skips this.</div>
     </div>
     <details class="voices" id="voices">
       <summary>Listen to voices</summary>
@@ -261,16 +262,6 @@
         </div>
         <textarea id="cloneText" rows="2" lang="hi" placeholder="रिकॉर्डिंग में बोले गए शब्द" style="width:100%;margin-top:8px" aria-label="The words spoken in the recording"></textarea>
         <div class="inline" style="margin-top:8px;gap:10px"><button type="button" id="cloneSave">Save voice</button><span class="vmsg" id="cloneMsg" role="alert"></span></div>
-      </div>
-      <div id="voxBox" style="display:none;margin-top:14px">
-        <div class="vhead">VoxCPM2 voices (30 languages)</div>
-        <div class="vlist" id="xlist"></div>
-        <p class="hint">Pick one of the described voices above, or upload 5 to 20 seconds of one person speaking clearly, with no music and no background noise, to clone it. No typed text is needed. VoxCPM2 speaks 30 languages, Hindi included. It can be slower than real time on a Mac: the first play takes a minute or two.</p>
-        <div class="inline" style="gap:8px;flex-wrap:wrap">
-          <input type="text" id="voxName" maxlength="24" placeholder="name, e.g. taksh" style="max-width:170px" aria-label="Name for the VoxCPM voice">
-          <input type="file" id="voxFile" accept="audio/*,.m4a,.mp3,.wav,.ogg,.webm,.flac" aria-label="Recording of the voice">
-          <button type="button" id="voxSave">Save voice</button><span class="vmsg" id="voxMsg" role="alert"></span>
-        </div>
       </div>
     </details>
     <label class="field"><span>Style notes <em style="font-style:normal;opacity:.7">(optional)</em></span>
@@ -641,26 +632,13 @@ $('cloneSave').addEventListener('click', async () => {
   } catch (e) { msg.textContent = e.message; } finally { btn.disabled = false; }
 });
 
-$('voxSave').addEventListener('click', async () => {
-  const msg = $('voxMsg'), file = $('voxFile').files[0], name = $('voxName').value.trim().toLowerCase();
-  msg.textContent = '';
-  if (!file) { msg.textContent = 'Choose a recording first.'; return; }
-  const btn = $('voxSave'); btn.disabled = true; msg.textContent = 'Saving…';
-  try {
-    const v = await api(`/api/voxcpm-voices?name=${encodeURIComponent(name)}`, { method: 'POST', headers: { 'content-type': 'application/octet-stream' }, body: file });
-    await refreshVoices(v.id);
-    $('voxName').value = ''; $('voxFile').value = '';
-    msg.textContent = `Saved ${nice(v.id)}. It is selected for the next video; press its play button to hear it.`;
-  } catch (e) { msg.textContent = e.message; } finally { btn.disabled = false; }
-});
-
 // ---- voice samples ----
 const player = new Audio();
 let playingBtn = null;
 const cap = (t) => t.replace(/^./, (c) => c.toUpperCase());
 // Kokoro ids look like af_heart; a cloned voice is my_<name>; the Hindi F5 voice is just f5.
-const nice = (id) => (id.startsWith('vxd_') ? (config.voices.find((v) => v.id === id)?.label || cap(id.slice(4))) + ' (VoxCPM)' : id.startsWith('vx_') ? cap(id.slice(3)) + ' (VoxCPM clone)' : id.startsWith('my_') ? cap(id.slice(3)) + ' (cloned)' : id[2] === '_' ? cap(id.slice(3)) : id.toUpperCase());
-const voiceText = (v) => (v.preset ? `${nice(v.id)} · ${v.design}` : `${nice(v.id)} · ${v.label.replace(' English', '').replace(', ', ' ')}`);
+const nice = (id) => (id.startsWith('my_') ? cap(id.slice(3)) + ' (cloned)' : id[2] === '_' ? cap(id.slice(3)) : id.toUpperCase());
+const voiceText = (v) => `${nice(v.id)} · ${v.label.replace(' English', '').replace(', ', ' ')}`;
 const LANGUAGE_NAMES = { en: 'English', hi: 'Hindi' };
 // The languages that have voices, English first, as [code, name].
 const voiceLanguages = () => [...new Set(config.voices.map((v) => v.language))].map((c) => [c, LANGUAGE_NAMES[c] || c]);
@@ -673,14 +651,8 @@ function buildVoiceSelect(keep) {
   sel.textContent = '';
   for (const [lang, name] of voiceLanguages()) {
     const group = el('optgroup', { label: name });
-    config.voices.filter((v) => v.language === lang && !v.voxcpm).forEach((v) => group.append(el('option', { value: v.id, textContent: voiceText(v), selected: v.id === (keep || 'bm_george') })));
+    config.voices.filter((v) => v.language === lang).forEach((v) => group.append(el('option', { value: v.id, textContent: voiceText(v), selected: v.id === (keep || 'bm_george') })));
     if (group.children.length) sel.append(group);
-  }
-  const zx = config.voices.filter((v) => v.voxcpm);
-  if (zx.length) {
-    const group = el('optgroup', { label: 'VoxCPM2 voices' });
-    zx.forEach((v) => group.append(el('option', { value: v.id, textContent: voiceText(v), selected: v.id === keep })));
-    sel.append(group);
   }
 }
 // Reloads the voice lists after a cloned voice was added or removed.
@@ -692,16 +664,14 @@ async function refreshVoices(keep) {
 }
 function buildCloneBox() {
   $('cloneBox').style.display = config.voiceCloning ? '' : 'none';
-  $('voxBox').style.display = config.voxcpmCloning ? '' : 'none';
 }
 
 function buildVoiceList() {
-  const list = $('vlist'), xlist = $('xlist');
+  const list = $('vlist');
   list.textContent = '';
-  xlist.textContent = '';
   const langs = voiceLanguages();
   for (const v of langs.flatMap(([lang]) => config.voices.filter((x) => x.language === lang))) {
-    if (!v.voxcpm && langs.length > 1 && !list.querySelector(`[data-lang="${v.language}"]`)) {
+    if (langs.length > 1 && !list.querySelector(`[data-lang="${v.language}"]`)) {
       const head = el('div', { className: 'vhead', textContent: LANGUAGE_NAMES[v.language] || v.language });
       head.dataset.lang = v.language;
       list.append(head);
@@ -714,16 +684,16 @@ function buildVoiceList() {
     use.addEventListener('click', () => { $('voice').value = v.id; markVoice(); });
     const row = el('div', { className: 'vrow' }, play,
       el('div', { className: 'who' }, nice(v.id), el('small', { textContent: v.label.replace(' English', '').replace(', ', ' · ') })), use);
-    if (v.mine && !v.preset) {
+    if (v.mine) {
       const del = el('button', { type: 'button', className: 'ghost use', textContent: 'Delete', title: 'Delete this cloned voice' });
       del.addEventListener('click', async () => {
         if (!confirm(`Delete the cloned voice ${nice(v.id)}? Videos already made with it keep their own copy.`)) return;
-        try { await api(`/api/${v.voxcpm ? 'voxcpm-voices' : 'my-voices'}/${v.id.slice(3)}`, { method: 'DELETE' }); await refreshVoices($('voice').value === v.id ? 'hf_alpha' : undefined); } catch (e) { $('vmsg').textContent = e.message; }
+        try { await api(`/api/my-voices/${v.id.slice(3)}`, { method: 'DELETE' }); await refreshVoices($('voice').value === v.id ? 'hf_alpha' : undefined); } catch (e) { $('vmsg').textContent = e.message; }
       });
       row.append(del);
     }
     row.dataset.id = v.id;
-    (v.voxcpm ? xlist : list).append(row);
+    list.append(row);
   }
   markVoice();
 }

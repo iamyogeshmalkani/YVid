@@ -104,62 +104,7 @@ function readMyVoices() {
   return out;
 }
 
-// VoxCPM2 voices (OpenBMB, 30 languages). Two kinds: designed voices, which are just a written description of the voice
-// (the built-in list below), and voices cloned from the user's own recording: <voxcpm>/my-voices/<name>.wav (up to 20 seconds).
-// Ids: vxd_<key> for a designed voice, vx_<name> for a clone.
-const VOXCPM_HOME = process.env.EXPLAINROO_VOXCPM_HOME || path.join(process.env.EXPLAINROO_CACHE || path.join(os.homedir(), '.cache', 'explainroo'), 'voxcpm');
-const VOXCPM_VOICES = path.join(VOXCPM_HOME, 'my-voices');
-const voxcpmReady = () => fs.existsSync(process.env.EXPLAINROO_VOXCPM_PYTHON || path.join(VOXCPM_HOME, 'venv', 'bin', 'python')) && fs.existsSync(path.join(VOXCPM_HOME, 'model', 'model.safetensors'));
-const VOXCPM_DESIGNS = {
-  warmwoman: ['Warm woman', 'A warm, friendly young woman, clear and natural, medium pace'],
-  calmwoman: ['Calm woman', 'A calm, soft-spoken woman in her thirties, gentle and reassuring'],
-  brightwoman: ['Bright woman', 'A bright, energetic young woman, upbeat and cheerful, slightly fast'],
-  elderwoman: ['Mature woman', 'A mature woman in her fifties, composed and authoritative, warm low voice'],
-  warmman: ['Warm man', 'A warm, friendly man in his thirties, relaxed and natural, medium pace'],
-  deepman: ['Deep man', 'A deep, resonant middle-aged man, calm and authoritative, slow and steady'],
-  youngman: ['Young man', 'An energetic young man, enthusiastic and clear, slightly fast'],
-  narrator: ['Storyteller', 'An older man with a rich, gravelly storyteller voice, slow and dramatic'],
-  child: ['Boy', 'A cheerful young boy, curious and excited'],
-};
-function readVoxcpmVoices() {
-  if (!voxcpmReady()) return [];
-  const designs = Object.entries(VOXCPM_DESIGNS).map(([k, [name, design]]) => ({ id: `vxd_${k}`, language: 'en', label: name, voxcpm: true, preset: true, design }));
-  const mine = !fs.existsSync(VOXCPM_VOICES) ? [] : fs.readdirSync(VOXCPM_VOICES).sort().flatMap((f) => {
-    const m = f.match(/^([a-z0-9]{1,24})\.wav$/);
-    return m ? [{ id: `vx_${m[1]}`, language: 'en', label: 'Your cloned voice (VoxCPM)', mine: true, voxcpm: true, file: path.join(VOXCPM_VOICES, f) }] : [];
-  });
-  return [...designs, ...mine];
-}
-const readVoices = () => [...readStockVoices(), ...readMyVoices(), ...readVoxcpmVoices()];
-
-function saveVoxcpmVoice(name, bytes) {
-  if (!voxcpmReady()) throw new HttpError(400, 'The VoxCPM voice is not set up yet: run  sh setup-voxcpm-voice.sh  and restart the Studio.');
-  name = String(name || '').toLowerCase();
-  if (!/^[a-z0-9]{1,24}$/.test(name)) throw new HttpError(400, 'Give the voice a short name with letters and digits only, for example "anita".');
-  if (!bytes.length) throw new HttpError(400, 'Choose a recording first.');
-  fs.mkdirSync(VOXCPM_VOICES, { recursive: true });
-  const tmp = path.join(VOXCPM_VOICES, `${name}.upload`);
-  const out = path.join(VOXCPM_VOICES, `${name}.part.wav`);
-  fs.writeFileSync(tmp, bytes);
-  try {
-    const r = spawnSync(childEnv().EXPLAINROO_FFMPEG, ['-loglevel', 'error', '-y', '-i', tmp, '-vn', '-ac', '1', '-ar', '24000', '-t', '20', '-c:a', 'pcm_s16le', out], { encoding: 'utf8' });
-    if (r.status !== 0 || !fs.existsSync(out)) throw new HttpError(400, 'That file could not be read as audio. Use a wav, mp3, m4a, ogg, webm or flac recording.');
-    const seconds = (fs.statSync(out).size - 44) / 48000;
-    if (seconds < 4) throw new HttpError(400, `The recording is only ${seconds.toFixed(1)} seconds long. Use 5 to 20 seconds of one person speaking clearly.`);
-    fs.renameSync(out, path.join(VOXCPM_VOICES, `${name}.wav`));
-    fs.rmSync(path.join(SAMPLES, `vx_${name}.wav`), { force: true }); // an older sample of this name is stale
-  } finally {
-    fs.rmSync(tmp, { force: true });
-    fs.rmSync(out, { force: true });
-  }
-  return readVoxcpmVoices().find((v) => v.id === `vx_${name}`);
-}
-
-function deleteVoxcpmVoice(name) {
-  if (!/^[a-z0-9]{1,24}$/.test(name)) throw new HttpError(400, 'Unknown voice.');
-  fs.rmSync(path.join(VOXCPM_VOICES, `${name}.wav`), { force: true });
-  fs.rmSync(path.join(SAMPLES, `vx_${name}.wav`), { force: true });
-}
+const readVoices = () => [...readStockVoices(), ...readMyVoices()];
 
 // Turns an uploaded recording into the 24 kHz mono WAV F5 clones from (the first 12 seconds), and saves it with its words.
 function saveMyVoice(name, text, bytes) {
@@ -225,7 +170,7 @@ function voiceSample(id) {
     sampleJobs.set(id, new Promise((resolve, reject) => {
       const info = readVoices().find((v) => v.id === id);
       const text = SAMPLE_TEXTS[info?.language] || SAMPLE_TEXTS.en;
-      const args = info?.voxcpm ? ['--voice', 'voxcpm', ...(info.design ? ['--design', info.design] : ['--ref', info.file])] : info?.mine ? ['--voice', 'f5', '--ref', info.file, '--ref-text', info.text] : ['--voice', id];
+      const args = info?.mine ? ['--voice', 'f5', '--ref', info.file, '--ref-text', info.text] : ['--voice', id];
       const p = spawn('node', [path.join(EXPL, 'bin/explainroo.js'), 'say', text, ...args, '--out', tmp], { cwd: EXPL, env: childEnv(), stdio: ['ignore', 'ignore', 'pipe'] });
       let err = '';
       p.stderr.on('data', (d) => { err = (err + d).slice(-500); });
@@ -291,7 +236,7 @@ The job:
 - Topic: ${j.topic}
 - Template: ${j.template}. Create the project with \`sh scripts/new-video.sh ${j.template} ${j.slug}\`, then work only inside videos/${j.slug}/.
 - Length: ${j.script && j.scriptMode === 'exact' ? "set by the user's own script (ignore any length setting)" : `about ${j.seconds} seconds of narration. If the template's own guidance gives a range, stay inside it`}.
-${j.voiceRef?.voxcpm ? (j.voiceRef.design ? `- Voice: this is a VoxCPM2 designed voice. Set "voice" in videos/${j.slug}/video.json to exactly ${JSON.stringify({ provider: 'voxcpm', design: j.voiceRef.design })}. VoxCPM2 speaks 30 languages (including Hindi), so set "language" in video.json to the language the narration is written in.` : `- Voice: this is the user's own cloned voice (VoxCPM2). Run \`mkdir -p videos/${j.slug}/assets && cp "${j.voiceRef.file}" videos/${j.slug}/assets/voice-ref.wav\` and set "voice" in videos/${j.slug}/video.json to exactly ${JSON.stringify({ provider: 'voxcpm', ref: 'assets/voice-ref.wav' })}. VoxCPM2 speaks 30 languages (including Hindi), so set "language" in video.json to the language the narration is written in.`) : j.voiceRef ? `- Voice: this is the user's own cloned voice (Hindi, F5 model). Run \`mkdir -p videos/${j.slug}/assets && cp "${j.voiceRef.file}" videos/${j.slug}/assets/voice-ref.wav\` and set "voice" in videos/${j.slug}/video.json to exactly ${JSON.stringify({ provider: 'f5', ref: 'assets/voice-ref.wav', refText: j.voiceRef.text })} (keep the refText as it is: it is what the recording says). Read "Hindi voice with voice cloning" in AGENTS.md. This voice is about four times slower to make than playback, so make the narration once, after the script is final.` : `- Voice: set "voice": "${j.voice}" in videos/${j.slug}/video.json.`}
+${j.voiceRef ? `- Voice: this is the user's own cloned voice (Hindi, F5 model). Run \`mkdir -p videos/${j.slug}/assets && cp "${j.voiceRef.file}" videos/${j.slug}/assets/voice-ref.wav\` and set "voice" in videos/${j.slug}/video.json to exactly ${JSON.stringify({ provider: 'f5', ref: 'assets/voice-ref.wav', refText: j.voiceRef.text })} (keep the refText as it is: it is what the recording says). Read "Hindi voice with voice cloning" in AGENTS.md. This voice is about four times slower to make than playback, so make the narration once, after the script is final.` : `- Voice: set "voice": "${j.voice}" in videos/${j.slug}/video.json.`}
 ${languageBlock(j, t)}
 - Title: set a good "title" in video.json.
 - Notes from the user about the look or tone: ${j.notes || 'none'}
@@ -478,7 +423,7 @@ function createJob(body) {
   const images = template.usesPictures ? 'perchance' : 'perchance';
   const length = LENGTHS[body.length] ? body.length : 'standard';
   const j = {
-    id: Math.random().toString(36).slice(2, 10), kind: 'create', topic, template: template.id, voice, voiceRef: voiceInfo.mine || voiceInfo.design ? { file: voiceInfo.file, text: voiceInfo.text, voxcpm: !!voiceInfo.voxcpm, design: voiceInfo.design } : null, language: voiceInfo.language, images, length, seconds: LENGTHS[length],
+    id: Math.random().toString(36).slice(2, 10), kind: 'create', topic, template: template.id, voice, voiceRef: voiceInfo.mine ? { file: voiceInfo.file, text: voiceInfo.text } : null, language: voiceInfo.language, images, length, seconds: LENGTHS[length],
     notes: String(body.notes || '').trim().slice(0, 300),
     script: scriptMode === 'auto' ? '' : script, scriptMode, skipScript, slug: '', status: 'queued', stage: null, reached: [],
     events: [], listeners: new Set(), createdAt: Date.now(),
@@ -753,25 +698,20 @@ function readRaw(req, max) {
 }
 
 const server = http.createServer(async (req, res) => {
-  // This server can start an agent, so only answer requests meant for it (blocks DNS-rebinding and other sites' posts).
-  const hostOk = [`127.0.0.1:${PORT}`, `localhost:${PORT}`].includes(req.headers.host);
-  const origin = req.headers.origin;
-  if (!hostOk || (origin && origin !== `http://${req.headers.host}`)) { res.writeHead(403); return res.end('forbidden'); }
+  // Only answer local traffic (blocks DNS-rebinding). Host may be rewritten by a preview proxy.
+  const remote = req.socket.remoteAddress || '';
+  const fromLocal = remote === '127.0.0.1' || remote === '::1' || remote === '::ffff:127.0.0.1';
+  const hostOk = fromLocal || [`127.0.0.1:${PORT}`, `localhost:${PORT}`].includes(req.headers.host);
+  if (!hostOk) { res.writeHead(403); return res.end('forbidden'); }
   const url = new URL(req.url, `http://${req.headers.host}`);
   const p = url.pathname;
   try {
-    if (req.method === 'GET' && p === '/api/config') return json(res, 200, { templates: readTemplates(), voices: readVoices().map(({ file, ...v }) => v), lengths: LENGTHS, cloudflare: cloudflareReady(), voiceCloning: f5Ready(), voxcpmCloning: voxcpmReady() });
+    if (req.method === 'GET' && p === '/api/config') return json(res, 200, { templates: readTemplates(), voices: readVoices().map(({ file, ...v }) => v), lengths: LENGTHS, cloudflare: cloudflareReady(), voiceCloning: f5Ready() });
     if (req.method === 'POST' && p === '/api/my-voices') {
       const v = saveMyVoice(url.searchParams.get('name'), url.searchParams.get('text'), await readRaw(req, 25 * 1048576));
       const { file, ...pub } = v;
       return json(res, 201, pub);
     }
-    if (req.method === 'POST' && p === '/api/voxcpm-voices') {
-      const { file, ...pub } = saveVoxcpmVoice(url.searchParams.get('name'), await readRaw(req, 25 * 1048576));
-      return json(res, 201, pub);
-    }
-    const zv = p.match(/^\/api\/voxcpm-voices\/([a-z0-9]+)$/);
-    if (zv && req.method === 'DELETE') { deleteVoxcpmVoice(zv[1]); return json(res, 200, { ok: true }); }
     let mv = p.match(/^\/api\/my-voices\/([a-z0-9]+)$/);
     if (mv && req.method === 'DELETE') { deleteMyVoice(mv[1]); return json(res, 200, { ok: true }); }
     let vm = p.match(/^\/api\/voices\/(\w+)\/sample\.wav$/);

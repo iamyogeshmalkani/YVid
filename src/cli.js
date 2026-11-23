@@ -50,7 +50,6 @@ Reference
   voices [project]      list Kokoro voices (--language es for one language)
   say "text"            hear a Kokoro voice (--voice am_michael, --speed 1, --out sample.wav)
                         or the Hindi F5 voice (--voice f5, --ref my-voice.wav --ref-text "..." to clone one)
-                        or VoxCPM (--voice voxcpm --design "A calm man, warm voice" or --ref my-voice.wav [--ref-text "..."])
   themes                list looks
   formats               list sizes for YouTube, Shorts, TikTok, Reels, Instagram, LinkedIn
   icons <word…>         search the 1,800+ built-in icons
