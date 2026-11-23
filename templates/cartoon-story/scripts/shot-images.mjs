@@ -8,11 +8,8 @@
 //   node scripts/shot-images.mjs <project> --only 3,5              only these shots
 //   node scripts/shot-images.mjs <project> --characters --perchance   first: one full-body picture of each CAST member (assets/char-<key>.png) to look at the cast before any shot is made
 //   node scripts/shot-images.mjs <project> --perchance [--only 3]  make them with perchance.org in a Chrome window (free, no key); prompts are sent to that website
-//   node scripts/shot-images.mjs <project> --local                 free: runs on this computer (mflux), nothing is sent anywhere
-//   node scripts/shot-images.mjs <project> --cloudflare            Cloudflare Workers AI; needs CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID in .env
-//   node scripts/shot-images.mjs <project> --pollinations          hosted FLUX; needs POLLINATIONS_API_KEY
-//   node scripts/shot-images.mjs <project> --both | --all         several makers at once, each taking the next missing picture
 //   node scripts/shot-images.mjs <project> --dry-run               list what would be made, and write nothing
+// YVid: Perchance only. Do not use --local, --cloudflare or --pollinations.
 //
 // Save pictures you make yourself as <project>/assets/shot01.png, shot02.png ... (the number is the shot's `n`; .jpg and
 // .webp work too). Perchance in a window needs a visible Chrome on some Macs: set EXPLAINROO_CHROME to its path first.
@@ -52,9 +49,12 @@ if (!flag('characters')) { // the shots must be written carefully before any pic
 const promptOf = (s) => (s.prompt ? s.prompt : promptFor(s));
 const todo = SHOTS.filter((s) => !have(s.file) && (!only || only.includes(s.file) || only.includes(String(s.n)) || only.includes(s.scene)));
 const aspect = ASPECT || '9:16';
-const MAKER_FLAGS = ['perchance', 'local', 'cloudflare', 'pollinations', 'both', 'all'];
-const makers = flag('all') ? ['perchance', 'cloudflare', 'local'] : flag('both') ? ['perchance', 'local']
-  : MAKER_FLAGS.filter((m) => flag(m) && !['both', 'all'].includes(m));
+const blocked = ['local', 'cloudflare', 'pollinations', 'both', 'all'].filter((m) => flag(m));
+if (blocked.length) {
+  console.error(`YVid only uses Perchance for AI pictures (got --${blocked.join(', --')}). Use --perchance, or draw frames in scenes.js with code.`);
+  process.exit(1);
+}
+const makers = flag('perchance') ? ['perchance'] : [];
 
 const doneCount = SHOTS.length - SHOTS.filter((s) => !have(s.file)).length;
 console.log(`${SHOTS.length} pictures${flag('characters') ? ' (the cast)' : ` (of ${ALL_SHOTS.length} shots; number cards and splits need none)`}: ${doneCount} already in assets/, ${todo.length} to go${only ? ' (after --only)' : ''}.`);
@@ -89,10 +89,7 @@ if (!fs.existsSync(bin)) { console.error(`cannot find explainroo at ${bin}; run 
 const lanes = makers.flatMap((m) => m === 'perchance' ? Array.from({ length: Math.max(1, Math.min(tabs, todo.length)) }, (_, i) => ({ model: m, name: `perchance#${i + 1}` })) : [{ model: m, name: m }]);
 const multi = lanes.length > 1;
 const describe = {
-  local: 'on this computer (free, about 2 minutes each on an M2)',
   perchance: `with perchance.org in ${tabs} Chrome tab${tabs === 1 ? '' : 's'} at a time (free, about 20 to 30 seconds each; prompts are sent to that website)`,
-  cloudflare: 'with Cloudflare Workers AI (about 5 seconds each, free daily allowance; prompts are sent to Cloudflare)',
-  pollinations: 'with hosted FLUX on pollinations.ai (about 10 seconds each; prompts are sent to that website)',
 };
 if (multi) console.log(`${todo.length} picture(s) to make, ${lanes.length} at a time (${lanes.map((l) => l.name).join(', ')}).`);
 else console.log(`${todo.length} picture(s) to make ${describe[makers[0]]}.`);

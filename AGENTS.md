@@ -28,8 +28,10 @@ the script on this computer, or the narration comes from your
 own recording. Whisper listens to the narration and writes down when each
 word is spoken. Chrome draws the frames in the background.
 explainroo adds music and sound effects, and ffmpeg makes the MP4. You need
-no API key for local voices or recordings. Cloud picture makers
-(Cloudflare, Pollinations) need keys; local and Perchance pictures need none.
+no API key for local voices or recordings. For pictures, YVid only uses
+**Perchance** (free, no key) or **code-drawn** frames in `scenes.js`
+(HTML/CSS-style layout, text, shapes). Do not use Cloudflare, Pollinations
+or a local image model.
 
 The full documentation for people is at https://www.explainroo.com/docs/.
 
@@ -75,7 +77,7 @@ layout and the wording. Ask only when you cannot go on without an answer.
 When you ask, put everything you need in one message. Typical reasons to ask:
 
 - The topic is unclear, or you need a fact you cannot check.
-- The user wants cloud AI images (Cloudflare or Pollinations) and there is no key (see Images).
+- The user wants AI pictures and Perchance cannot run (no Chrome, or they refuse the site); then draw with code in `scenes.js` instead (see Images).
 - The user wants something explainroo cannot do, like video shot with a
   camera.
 
@@ -565,37 +567,39 @@ when the user hears it wrong.
 
 ## Images
 
-explainroo can make illustrations with AI image models. This is optional.
-`--model local` runs on this computer (Apple Silicon, free), `--model perchance`
-uses perchance.org in a Chrome window (free, no key), `--model cloudflare` uses
-Cloudflare Workers AI (`CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`, free
-daily allowance) and `--model pollinations` uses `POLLINATIONS_API_KEY`. Save keys
-in a `.env` file in the explainroo folder, or set them as environment variables.
-Git ignores `.env`. Never print a key, and never put it in a script, a commit
-or a log.
+YVid has **two** ways to put pictures on screen. Use only these.
+
+### 1. Perchance (AI stills, free, no key)
+
+`--model perchance` opens perchance.org in a Chrome window and saves PNGs.
+No API key. For the cartoon-story template, prefer the project script:
 
 ```bash
-node bin/explainroo.js image videos/<name> cables "Two cars parked nose to nose with their hoods open, jumper cables between the batteries"
-node bin/explainroo.js images videos/<name>    # what was made
+node videos/<name>/scripts/shot-images.mjs videos/<name> --perchance
 ```
 
-This saves `assets/cables.png`. Use it in a scene with
+Or one-off:
+
+```bash
+node bin/explainroo.js image videos/<name> cables "Two cars parked nose to nose..." --model perchance
+node bin/explainroo.js images videos/<name>
+```
+
+Use the file in a scene with
 `s.image('assets/cables.png', { w: 1100, frame: 'card', at: 'cables' })`.
+Set `"images": { "model": "perchance" }` in `video.json` (cartoon-story already does).
+`--aspect` sets the shape (`9:16`, `1:1`, …). Keep one look for the whole video.
 
-- `--model` picks the maker: `local`, `perchance` (default), `cloudflare` or
-  `pollinations`. They draw in slightly different styles; keep one per video.
-- `--aspect` sets the shape of the image: `16:9` (default for landscape
-  videos), `9:16`, `1:1`, `4:3`, `3:2` and their portrait forms.
-- Every image gets a default style (flat, soft colors, no text). Set your own
-  in `video.json` with `"images": { "style": "...", "model": "local" }`, or
-  turn the style off with `--no-style`.
+**Always open every image and check it.** Models get details wrong. Remake bad
+ones. Keep text out of AI images; put words on screen with `s.text` / captions.
 
-**Always open every image and check it.** Image models get details wrong:
-extra fingers, cables on the wrong terminal, text that looks like writing but
-is not. If anything is wrong, change the prompt and make the image again.
-Keep text out of images. Put words on screen with `s.text` instead. Use
-images for things icons cannot show, and keep one style through the whole
-video.
+### 2. Code (HTML / CSS-style drawing, no image model)
+
+Draw the frame in `scenes.js` with the engine: `s.text`, `s.icon`, shapes,
+layout, and `s.ui` (cards, buttons, fields). This is proper on-computer
+graphics — no Perchance, no API. Prefer this when the story is diagrams,
+UI, charts or type, or when the user does not want AI stills. See the
+drawing and UI sections later in this file.
 
 ## Product demos
 
@@ -903,7 +907,7 @@ videos/<name>/
 | `loudness` | -14 | target loudness in LUFS |
 | `boil` | 0 | redraws per second of hand-drawn lines; 0 keeps them still |
 | `watermark` | `"explainroo.com"` | small text in a corner, or `false` |
-| `images` | none | `{ "model": "local", "perchance", "cloudflare" or "pollinations", "style": "..." }` |
+| `images` | none | `{ "model": "perchance", "style": "..." }` (YVid: Perchance only) |
 | `brand` | none | colors, fonts and logo for `s.ui`, see [Product demos](#product-demos) |
 | `fonts` | none | the video's own font files, see [Product demos](#product-demos) |
 
@@ -977,7 +981,7 @@ when `ink` or `muted` has too little contrast against `bg`.
 | `verify [project]` | checks the finished MP4, WebM or MOV: loudness, black frames, silence, clear voice (`--file` picks another file) |
 | `export [project]` | writes a web player folder (`--out dir`, `--json`), by default `out/player/` |
 | `capture [project] <url>` | saves screenshots, wording, colors, fonts and logos from a live site (`--mobile`, `--json`) |
-| `image [project] <name> "<prompt>"` | makes an illustration (local, Perchance, Cloudflare or Pollinations) |
+| `image [project] <name> "<prompt>"` | makes an illustration with Perchance (`--model perchance`) |
 | `images [project]` | lists the images and what they cost |
 | `voices`, `say "text"` | lists Kokoro voices with their languages (`--language es`, `ja` or `zh` filters voices), or makes a sample in the chosen voice's language |
 | `themes`, `formats`, `icons <word>` | lists the looks and the sizes, searches the 1,854 icons |

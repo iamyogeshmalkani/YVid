@@ -52,9 +52,8 @@ export const DEFAULT_STYLE =
   'Flat illustration for a friendly how-to video, soft colors, simple shapes, clear subject in the middle, plain light background, no text, no letters, no numbers, no logos, no watermark.';
 
 export function resolveModel(name) {
-  if (!name) return IMAGE_MODELS.perchance;
-  if (IMAGE_MODELS[name]) return IMAGE_MODELS[name];
-  throw new ProjectError('image model must be "local", "perchance", "cloudflare" or "pollinations"');
+  if (!name || name === 'perchance') return IMAGE_MODELS.perchance;
+  throw new ProjectError('YVid only supports --model perchance for AI pictures (or draw frames in scenes.js with code). Do not use local, cloudflare or pollinations.');
 }
 
 function mfluxBin() {

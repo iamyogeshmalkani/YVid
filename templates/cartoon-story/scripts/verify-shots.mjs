@@ -6,8 +6,8 @@
 //   node scripts/verify-shots.mjs <project>                       sheets + checklist + status (what is still to check)
 //   node scripts/verify-shots.mjs <project> --ok 1-6,8,12         mark these pictures good (lists and ranges)
 //   node scripts/verify-shots.mjs <project> --bad 9:two crocodiles --bad 14:croc is fat   mark pictures to remake, with the reason
-//   node scripts/verify-shots.mjs <project> --remake [--perchance|--local|--cloudflare|--pollinations]
-//                                                                 delete the bad pictures, make them again, they are "to check" again
+//   node scripts/verify-shots.mjs <project> --remake [--perchance]
+//                                                                 delete the bad pictures, make them again with Perchance, they are "to check" again
 //   node scripts/verify-shots.mjs <project> --gate                exit code 1 unless EVERY picture is ok (use it before render)
 //
 // What the sheets are: out/verify/<cast key>-N.jpg, every picture that has that character (the cast picture char-<key> comes
@@ -96,7 +96,12 @@ if (flag('remake')) {
   fs.appendFileSync(log, `\n## remake ${new Date().toISOString().slice(0, 16).replace('T', ' ')}\n${bad.map((p) => `- shot ${p.shot.n}: ${book[p.shot.n].note}`).join('\n')}\n`);
   for (const p of bad) { fs.unlinkSync(p.file); delete book[p.shot.n]; }
   save();
-  const maker = ['perchance', 'local', 'cloudflare', 'pollinations'].find((m) => flag(m)) || 'perchance';
+  const blocked = ['local', 'cloudflare', 'pollinations'].filter((m) => flag(m));
+  if (blocked.length) {
+    console.error(`YVid only remakes with Perchance (got --${blocked.join(', --')}).`);
+    process.exit(1);
+  }
+  const maker = 'perchance';
   console.log(`remaking ${bad.length} picture(s) with ${maker}: ${bad.map((p) => p.shot.n).join(', ')}`);
   const r = spawnSync('node', [new URL('./shot-images.mjs', import.meta.url).pathname, project, `--${maker}`, '--only', bad.map((p) => p.shot.n).join(',')], { stdio: 'inherit' });
   if (r.status) process.exit(r.status);

@@ -44,9 +44,12 @@ If you change the voice, the speed or a sentence, run `plan-shots.mjs` again: sh
 (a split follows its two shots to their new numbers); only new shots get a `TODO`. Pictures are named `shot01.png` ... by number: when
 shots move, delete the pictures of the changed shots (`storyboard.md` lists each number's words) and make them again with `--only`.
 
-Perchance (free, no key) needs a visible Chrome: set `EXPLAINROO_CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"`
-and keep that window open. `--local`, `--cloudflare` and `--pollinations` work too. Without a maker flag `shot-images.mjs` only writes
-`prompts.md`, one paste-ready prompt per picture (square, 1:1).
+**Pictures: Perchance only** (free, no key). Needs a visible Chrome: set
+`EXPLAINROO_CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"`
+and keep that window open. Do not use `--local`, `--cloudflare` or `--pollinations`.
+Without `--perchance`, `shot-images.mjs` only writes `prompts.md`, one paste-ready
+prompt per picture (square, 1:1). For non-AI frames, draw in `scenes.js` with code
+(HTML/CSS-style layout) instead of `shot-images.mjs`.
 
 ## Verify every picture before you render
 

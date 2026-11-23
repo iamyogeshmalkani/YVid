@@ -50,7 +50,10 @@ scripts/new-video.sh cartoon-story my-story
 | `bin/`, `src/`, `engine/` | the explainroo engine (voice, timing, render) |
 | `videos/` | your projects (git-ignored); created by `new-video.sh` |
 
-Pictures can be made with free Perchance (no key), a local model, or Cloudflare / Pollinations if you add a key in `.env`. See [SETUP-IMAGES.md](SETUP-IMAGES.md).
+Pictures in YVid use one of two paths only (see [SETUP-IMAGES.md](SETUP-IMAGES.md)):
+
+1. **Perchance** — free AI stills in Chrome, no API key (`--perchance`)
+2. **Code** — draw the frame yourself in `scenes.js` with the engine’s layout, text, shapes and HTML/CSS-style UI (no image model)
 
 ## License
 

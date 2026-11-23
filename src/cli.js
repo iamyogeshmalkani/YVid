@@ -41,9 +41,9 @@ Make a video
 Product demos
   capture [project] <url>  save screenshots, wording, colors, fonts and logo of a live site (--mobile)
 
-Images (optional: --model local runs on this computer, perchance uses perchance.org in a Chrome window (free, no key), cloudflare uses Workers AI (CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID), pollinations needs POLLINATIONS_API_KEY)
+Images (YVid: use --model perchance only; or draw in scenes.js with code / HTML-CSS-style UI — no Cloudflare, Pollinations or local mflux)
   image [project] <name> "<what to draw>"   save an illustration as assets/<name>.png
-                        (--model local|perchance|cloudflare|pollinations, --aspect 16:9, --no-style)
+                        (--model perchance, --aspect 16:9, --no-style)
   images [project]      list generated images
 
 Reference
