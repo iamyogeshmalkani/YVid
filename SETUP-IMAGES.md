@@ -2,7 +2,12 @@
 
 YVid supports **only** these two ways to make what appears on screen.
 
-## 1. Perchance (AI stills)
+| Template | Method |
+|---|---|
+| `cartoon-story` | Perchance AI stills |
+| `code-explainer` | Code in `scenes.js` (no image model) |
+
+## 1. Perchance (AI stills) — for `cartoon-story`
 
 Free. No API key. Needs Google Chrome open on this Mac.
 

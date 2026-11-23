@@ -1,15 +1,23 @@
 # YVid for coding agents
 
-YVid makes short **cartoon story** videos with your coding agent.
+YVid makes short narrated videos with your coding agent.
 The engine underneath is [explainroo](https://github.com/vincentsch/explainroo) (MIT).
-**Always use the `cartoon-story` template.** Do not invent other templates.
 
-Quick path after setup:
+**Use only these two templates.** Do not invent others.
+
+| Template | When | Pictures |
+|---|---|---|
+| `cartoon-story` | cartoon shorts with a cast and fast cuts | Perchance AI stills |
+| `code-explainer` | steps, diagrams, UI, teaching with type | drawn in `scenes.js` (no AI images) |
 
 ```bash
 scripts/new-video.sh cartoon-story <name>
-# then follow templates/cartoon-story/README.md and TEMPLATE.md
+# or
+scripts/new-video.sh code-explainer <name>
+# then follow that template's README.md and TEMPLATE.md
 ```
+
+Studio UI: `node ui/server.mjs` → http://127.0.0.1:4747
 
 The rest of this file is the explainroo agent guide (voice, timing, render, checks).
 
@@ -87,17 +95,18 @@ When you ask, put everything you need in one message. Typical reasons to ask:
    Write down the facts you will use. Never make up numbers, quotes or claims.
    If a number matters and you cannot check it, leave it out.
 
-2. **Create the project** with the only template YVid ships:
+2. **Create the project** with one of the two templates:
 
    ```bash
-   scripts/new-video.sh cartoon-story <name>
+   scripts/new-video.sh cartoon-story <name>     # Perchance cartoon stills
+   # or
+   scripts/new-video.sh code-explainer <name>    # code-drawn scenes.js
    ```
 
-   Projects go in `videos/`. Git ignores that folder. Read
-   `templates/cartoon-story/README.md` and `TEMPLATE.md` and follow those
-   steps (script → voice → plan shots → pictures → render). Do not use
-   `explainroo init` for a blank paper explainer unless the user clearly
-   asks to leave the cartoon-story format.
+   Projects go in `videos/`. Git ignores that folder. Read that template’s
+   `README.md` and `TEMPLATE.md` and follow those steps. Prefer
+   `cartoon-story` when the user wants cartoon pictures; prefer
+   `code-explainer` for diagrams, product UI or type-led explainers.
 
 3. **Write `script.md`.** The narration comes first. It sets the timing for
    everything else. See "How to write the narration" below.

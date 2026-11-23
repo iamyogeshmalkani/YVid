@@ -1,0 +1,14 @@
+{
+  "title": "How a click becomes a page",
+  "theme": "paper",
+  "size": "9:16",
+  "voice": "am_michael",
+  "speed": 1.05,
+  "music": {
+    "style": "warm",
+    "volume": 0.28
+  },
+  "sfx": "minimal",
+  "captions": true,
+  "watermark": false
+}

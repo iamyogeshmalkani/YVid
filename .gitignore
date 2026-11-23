@@ -9,3 +9,4 @@ out/
 videos/*
 !videos/.gitkeep
 env.local.sh
+ui/cache/

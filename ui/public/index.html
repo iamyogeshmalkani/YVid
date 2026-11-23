@@ -1,0 +1,823 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>YVid Studio</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+  :root {
+    --ink: #14181f;
+    --muted: #5c6573;
+    --paper: #eef1f5;
+    --panel: #ffffff;
+    --line: #d5dbe3;
+    --signal: #e23a2b;
+    --signal-ink: #fff8f6;
+    --teal: #0f7a6c;
+    --teal-soft: #d8f0eb;
+    --amber: #c98516;
+    --radius: 18px;
+    --shadow: 0 18px 50px rgba(20, 24, 31, 0.08);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; color: var(--ink);
+    font: 15.5px/1.5 "IBM Plex Sans", system-ui, sans-serif;
+    background:
+      radial-gradient(1200px 500px at 10% -10%, rgba(226,58,43,.10), transparent 55%),
+      radial-gradient(900px 420px at 100% 0%, rgba(15,122,108,.10), transparent 50%),
+      linear-gradient(180deg, #f7f8fb 0%, var(--paper) 40%, #e9edf3 100%);
+    min-height: 100%;
+  }
+  body::before {
+    content: "";
+    position: fixed; inset: 0; pointer-events: none; opacity: .35; z-index: 0;
+    background-image: repeating-linear-gradient(
+      -12deg, transparent, transparent 14px, rgba(20,24,31,.03) 14px, rgba(20,24,31,.03) 15px
+    );
+  }
+  header, main, .editor, .lib { position: relative; z-index: 1; }
+  .brand {
+    max-width: 1180px; margin: 0 auto; padding: 34px 28px 8px;
+    display: grid; gap: 10px;
+  }
+  .brand .mark {
+    font-family: "Bricolage Grotesque", system-ui, sans-serif;
+    font-weight: 800; font-size: clamp(42px, 7vw, 72px); letter-spacing: -0.04em;
+    line-height: .92; margin: 0;
+    background: linear-gradient(120deg, var(--ink) 40%, #2a3340 70%, var(--signal) 120%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    animation: rise .7s ease both;
+  }
+  .brand p {
+    margin: 0; max-width: 34rem; color: var(--muted); font-size: 17px;
+    animation: rise .7s .08s ease both;
+  }
+  @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .brand .mark, .brand p { animation: none; } }
+  main {
+    max-width: 1180px; margin: 0 auto; padding: 18px 28px 48px;
+    display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, .9fr); gap: 22px; align-items: start;
+  }
+  @media (max-width: 960px) { main { grid-template-columns: 1fr; padding: 12px 16px 40px; } .brand { padding: 24px 16px 4px; } }
+  .card {
+    background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 24px; box-shadow: var(--shadow);
+  }
+  h2 {
+    margin: 0 0 16px; font-family: "Bricolage Grotesque", system-ui, sans-serif;
+    font-size: 15px; font-weight: 700; letter-spacing: -0.01em; color: var(--ink);
+  }
+  label.field { display: block; margin-bottom: 16px; }
+  label.field > span, .field > span.lbl, .lbl {
+    display: block; font-size: 13px; color: var(--muted); margin-bottom: 7px; font-weight: 500;
+  }
+  textarea, input[type=text], select {
+    width: 100%; background: #f8fafc; color: var(--ink); border: 1px solid var(--line);
+    border-radius: 12px; padding: 12px 14px; font: inherit; outline: none; transition: border-color .15s, box-shadow .15s;
+  }
+  textarea { resize: vertical; min-height: 78px; font-size: 16px; }
+  textarea:focus, input:focus, select:focus {
+    border-color: #9eb0c4; box-shadow: 0 0 0 3px rgba(15,122,108,.14);
+  }
+  .templates { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
+  @media (max-width: 560px) { .templates { grid-template-columns: 1fr; } }
+  .tpl { position: relative; cursor: pointer; }
+  .tpl input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
+  .tpl div {
+    height: 100%; background: #f8fafc; border: 1.5px solid var(--line); border-radius: 16px;
+    padding: 16px 16px 14px; transition: border-color .15s, transform .15s, background .15s, box-shadow .15s;
+    min-height: 128px; display: grid; align-content: start; gap: 6px;
+  }
+  .tpl b {
+    font-family: "Bricolage Grotesque", system-ui, sans-serif; font-size: 17px; font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .tpl small { display: block; color: var(--muted); font-size: 13px; line-height: 1.4; }
+  .tpl em {
+    display: inline-flex; margin-top: 8px; font-style: normal; font-size: 11.5px; font-weight: 600;
+    color: var(--teal); background: var(--teal-soft); border-radius: 999px; padding: 3px 9px; width: fit-content;
+  }
+  .tpl input:checked + div {
+    border-color: var(--signal); background: #fff7f5;
+    box-shadow: 0 0 0 3px rgba(226,58,43,.12); transform: translateY(-1px);
+  }
+  .tpl input:focus-visible + div { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  @media (max-width: 560px) { .row { grid-template-columns: 1fr; } }
+  .seg { display: flex; background: #f1f4f8; border: 1px solid var(--line); border-radius: 12px; padding: 3px; gap: 3px; }
+  .seg label { flex: 1; text-align: center; cursor: pointer; position: relative; }
+  .seg input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
+  .seg span { display: block; padding: 9px 4px; border-radius: 9px; font-size: 13px; color: var(--muted); font-weight: 500; }
+  .seg input:checked + span { background: var(--ink); color: #fff; }
+  .seg input:focus-visible + span { outline: 2px solid var(--signal); }
+  button { font: inherit; cursor: pointer; border: 0; border-radius: 12px; padding: 12px 18px; }
+  .primary {
+    background: var(--signal); color: var(--signal-ink); font-weight: 700; font-size: 15.5px;
+    width: 100%; margin-top: 4px; letter-spacing: -0.01em;
+    box-shadow: 0 10px 24px rgba(226,58,43,.28);
+  }
+  .primary:hover { filter: brightness(1.05); }
+  .primary:disabled { opacity: .5; cursor: default; box-shadow: none; }
+  .ghost { background: transparent; color: var(--muted); border: 1px solid var(--line); padding: 7px 12px; font-size: 13px; }
+  .ghost:hover { color: var(--ink); border-color: #aab4c2; }
+  details.voices { margin: -4px 0 16px; }
+  details.voices summary { cursor: pointer; color: var(--teal); font-size: 13px; width: fit-content; list-style: none; font-weight: 600; }
+  details.voices summary::-webkit-details-marker { display: none; }
+  details.voices summary::before { content: '▸ '; } details.voices[open] summary::before { content: '▾ '; }
+  .vlist { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 8px; margin-top: 10px; }
+  .vhead { grid-column: 1 / -1; color: var(--muted); font-size: 12px; font-weight: 600; margin-top: 4px; }
+  .vrow { display: flex; align-items: center; gap: 10px; background: #f8fafc; border: 1px solid var(--line); border-radius: 12px; padding: 7px 10px; }
+  .vrow.sel { border-color: var(--signal); background: #fff7f5; }
+  .vrow .play { width: 30px; height: 30px; padding: 0; border-radius: 50%; background: #fff; border: 1px solid var(--line); color: var(--ink); font-size: 11px; flex: none; }
+  .vrow .play:hover { border-color: var(--signal); color: var(--signal); }
+  .vrow .play.on { background: var(--signal); color: #fff; border-color: var(--signal); }
+  .vrow .who { flex: 1; min-width: 0; line-height: 1.25; font-size: 13.5px; }
+  .vrow .who small { display: block; color: var(--muted); font-size: 12px; }
+  .vrow .use { padding: 4px 10px; font-size: 12px; }
+  .vmsg { color: var(--signal); font-size: 12.5px; margin-top: 8px; min-height: 1px; }
+  .hint { color: var(--muted); font-size: 12.5px; margin-top: 10px; }
+  .err { color: var(--signal); font-size: 13.5px; margin-top: 10px; min-height: 1px; font-weight: 500; }
+  .side { display: grid; gap: 18px; }
+  .empty { color: var(--muted); text-align: center; padding: 34px 10px; }
+  .jobhead { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+  .jobhead h3 { margin: 0; font-size: 16px; line-height: 1.35; font-family: "Bricolage Grotesque", system-ui, sans-serif; }
+  .jobhead small { color: var(--muted); }
+  .steps { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+  .step { font-size: 12px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); background: #f8fafc; }
+  .step.done { color: var(--teal); border-color: #9fd0c6; background: var(--teal-soft); }
+  .step.now { color: #fff; background: var(--ink); border-color: var(--ink); font-weight: 600; animation: pulse 1.6s infinite; }
+  @keyframes pulse { 50% { opacity: .7; } }
+  .log { background: #12161c; color: #d7dde6; border: 1px solid #242b36; border-radius: 12px; padding: 10px 12px; height: 200px; overflow: auto; font: 12px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .log div { white-space: pre-wrap; word-break: break-word; }
+  .log .tool { color: #8fb4d8; } .log .say { color: #e8edf4; } .log .warn { color: #ff8f82; }
+  .status { font-size: 13px; margin: 12px 0 0; }
+  .status.failed { color: var(--signal); } .status.done { color: var(--teal); font-weight: 600; }
+  .player { display: grid; justify-items: center; gap: 12px; }
+  video { width: min(100%, 340px); aspect-ratio: 9 / 16; background: #000; border-radius: 14px; max-height: 72vh; object-fit: contain; box-shadow: var(--shadow); }
+  .links { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  .links a { color: var(--ink); font-size: 13px; text-decoration: none; border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; background: #f8fafc; font-weight: 500; }
+  .links a:hover { border-color: var(--signal); color: var(--signal); }
+  .summary { color: var(--muted); font-size: 13.5px; max-width: 420px; text-align: center; }
+  .vcell { display: flex; flex-direction: column; gap: 6px; }
+  .vcell .edit { padding: 6px 10px; font-size: 12.5px; }
+  .editor { max-width: 1180px; margin: 0 auto 24px; padding: 0 28px; }
+  @media (max-width: 960px) { .editor { padding: 0 16px; } }
+  .edhead { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+  .edhead h3 { margin: 0; font-size: 17px; font-family: "Bricolage Grotesque", system-ui, sans-serif; }
+  .tabs { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+  .tabs button { background: transparent; border: 1px solid var(--line); color: var(--muted); padding: 8px 15px; border-radius: 999px; font-size: 13.5px; }
+  .tabs button:hover { color: var(--ink); }
+  .tabs button.on { background: var(--ink); color: #fff; border-color: var(--ink); font-weight: 600; }
+  textarea.mono { font: 13.5px/1.65 ui-monospace, SFMono-Regular, Menlo, monospace; min-height: 340px; }
+  .edcheck { font-size: 13px; margin-top: 8px; min-height: 20px; }
+  .edcheck.bad { color: var(--signal); } .edcheck.ok { color: var(--teal); } .edcheck .warn { color: var(--amber); display: block; }
+  .edcheck .bad { color: var(--signal); display: block; }
+  .edbar { display: flex; gap: 10px; align-items: center; justify-content: flex-end; margin-top: 20px; flex-wrap: wrap; }
+  .edbar .msg { margin-right: auto; font-size: 13px; color: var(--muted); }
+  .edbar .msg.bad { color: var(--signal); }
+  .edbar .primary { width: auto; margin: 0; padding: 11px 20px; }
+  .setgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 22px; }
+  @media (max-width: 700px) { .setgrid { grid-template-columns: 1fr; } }
+  .setgrid .full { grid-column: 1 / -1; }
+  .rangeval { display: flex; align-items: center; gap: 10px; }
+  .rangeval input[type=range] { flex: 1; accent-color: var(--signal); }
+  .rangeval b { min-width: 44px; text-align: right; font-weight: 600; font-size: 13.5px; }
+  .inline { display: flex; gap: 8px; align-items: center; }
+  .inline select { flex: 1; }
+  .inline .play { width: 38px; height: 38px; padding: 0; border-radius: 50%; background: #f8fafc; border: 1px solid var(--line); color: var(--ink); flex: none; }
+  .pics { display: grid; grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: 12px; }
+  .pic { background: #f8fafc; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  .pic img { display: block; width: 100%; aspect-ratio: 3 / 4; object-fit: cover; background: #000; }
+  .pic .cap { padding: 8px; font-size: 12.5px; display: grid; gap: 6px; }
+  .pic .cap b { font-weight: 600; }
+  .pic button { padding: 5px 8px; font-size: 12px; }
+  .lib { max-width: 1180px; margin: 0 auto; padding: 0 28px 60px; }
+  @media (max-width: 960px) { .lib { padding: 0 16px 50px; } }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
+  .vid { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; cursor: pointer; text-align: left; padding: 0; color: inherit; box-shadow: 0 8px 24px rgba(20,24,31,.05); }
+  .vid:hover { border-color: var(--signal); }
+  .vid .thumb { aspect-ratio: 9 / 16; background: #e8edf3 center / cover no-repeat; display: grid; place-items: center; color: var(--muted); font-size: 28px; }
+  .vid .t { padding: 9px 11px 11px; font-size: 13px; line-height: 1.3; }
+  .vid .t small { display: block; color: var(--muted); margin-top: 3px; }
+  .picnote {
+    display: flex; align-items: flex-start; gap: 10px; margin-bottom: 14px;
+    padding: 12px 14px; border-radius: 12px; background: var(--teal-soft); color: #0a5a50; font-size: 13px;
+  }
+  .picnote strong { font-weight: 700; }
+</style>
+</head>
+<body>
+<header class="brand">
+  <h1 class="mark">YVid</h1>
+  <p>Cartoon stories and code-drawn explainers. Pick a style, name a topic, get a narrated video on this computer.</p>
+</header>
+
+<main>
+  <form class="card" id="form" autocomplete="off">
+    <h2>New video</h2>
+    <div class="field" style="margin-bottom:12px"><span style="display:block;font-size:13px;color:var(--muted);margin-bottom:6px">Script</span>
+      <div class="seg" id="scriptModes">
+        <label><input type="radio" name="scriptMode" value="auto" checked><span>Write it for me</span></label>
+        <label><input type="radio" name="scriptMode" value="exact"><span>I have a script</span></label>
+        <label><input type="radio" name="scriptMode" value="outline"><span>I have an outline</span></label>
+      </div>
+    </div>
+    <label class="field"><span id="topicLabel">Topic</span>
+      <textarea id="topic" placeholder="e.g. The richest person in history, or How the shipping container changed trade" maxlength="400" required></textarea>
+    </label>
+    <label class="field" id="scriptBox" hidden><span id="scriptLabel">Your script</span>
+      <textarea id="script" maxlength="8000"></textarea>
+      <small class="hint" id="scriptHint"></small>
+    </label>
+    <div><span style="display:block;font-size:13px;color:var(--muted);margin-bottom:8px">Template</span></div>
+    <div class="templates" id="templates" role="radiogroup" aria-label="Template"></div>
+    <div class="row">
+      <div class="field"><span style="display:block;font-size:13px;color:var(--muted);margin-bottom:6px">Length</span>
+        <div class="seg" id="length">
+          <label><input type="radio" name="length" value="short"><span>Short</span></label>
+          <label><input type="radio" name="length" value="standard" checked><span>Standard</span></label>
+          <label><input type="radio" name="length" value="long"><span>Long</span></label>
+        </div>
+      </div>
+      <label class="field"><span>Voice</span><select id="voice"></select></label>
+      <input type="hidden" id="images" value="perchance">
+      <div class="field" id="picsField">
+        <span class="lbl">Pictures</span>
+        <div class="picnote" id="imgModeNote"><strong>Perchance</strong> — free AI stills in Chrome. Code-explainer draws frames itself and skips this.</div>
+      </div>
+    </div>
+    <details class="voices" id="voices">
+      <summary>Listen to voices</summary>
+      <div class="vlist" id="vlist"></div>
+      <div class="vmsg" id="vmsg" role="alert"></div>
+      <div id="cloneBox" style="display:none;margin-top:14px">
+        <div class="vhead">Clone a voice (Hindi)</div>
+        <p class="hint">Upload 5 to 12 seconds of one person speaking Hindi clearly, with no music (a Voice Memos recording is fine), and type exactly what they say in Devanagari. A wrong text makes the clone mumble. Press the play button on the new voice to hear it; the first play takes about 20 seconds.</p>
+        <div class="inline" style="gap:8px;flex-wrap:wrap">
+          <input type="text" id="cloneName" maxlength="24" placeholder="name, e.g. anita" style="max-width:170px" aria-label="Name for the cloned voice">
+          <input type="file" id="cloneFile" accept="audio/*,.m4a,.mp3,.wav,.ogg,.webm,.flac" aria-label="Recording of the voice">
+        </div>
+        <textarea id="cloneText" rows="2" lang="hi" placeholder="रिकॉर्डिंग में बोले गए शब्द" style="width:100%;margin-top:8px" aria-label="The words spoken in the recording"></textarea>
+        <div class="inline" style="margin-top:8px;gap:10px"><button type="button" id="cloneSave">Save voice</button><span class="vmsg" id="cloneMsg" role="alert"></span></div>
+      </div>
+      <div id="voxBox" style="display:none;margin-top:14px">
+        <div class="vhead">VoxCPM2 voices (30 languages)</div>
+        <div class="vlist" id="xlist"></div>
+        <p class="hint">Pick one of the described voices above, or upload 5 to 20 seconds of one person speaking clearly, with no music and no background noise, to clone it. No typed text is needed. VoxCPM2 speaks 30 languages, Hindi included. It can be slower than real time on a Mac: the first play takes a minute or two.</p>
+        <div class="inline" style="gap:8px;flex-wrap:wrap">
+          <input type="text" id="voxName" maxlength="24" placeholder="name, e.g. taksh" style="max-width:170px" aria-label="Name for the VoxCPM voice">
+          <input type="file" id="voxFile" accept="audio/*,.m4a,.mp3,.wav,.ogg,.webm,.flac" aria-label="Recording of the voice">
+          <button type="button" id="voxSave">Save voice</button><span class="vmsg" id="voxMsg" role="alert"></span>
+        </div>
+      </div>
+    </details>
+    <label class="field"><span>Style notes <em style="font-style:normal;opacity:.7">(optional)</em></span>
+      <input type="text" id="notes" maxlength="300" placeholder="e.g. muted, mature colors; serious tone">
+    </label>
+    <p class="hint" style="margin:0 0 12px">Scripts are written to hook you in the first 3 seconds and keep the tension up. Every video speaks louder on the words that matter: the intro words, key names, numbers and the closing point.</p>
+    <button class="primary" id="go" type="submit">Make my video</button>
+    <div class="err" id="err" role="alert"></div>
+    <p class="hint" id="imgHint">Cartoon story uses Perchance (Chrome window, no API key). Code explainer draws with layout, text and UI helpers — no AI pictures. Making a video uses your Claude Code plan and usually takes 10 to 25 minutes.</p>
+  </form>
+
+  <div class="side">
+    <section class="card" id="job">
+      <h2>Progress</h2>
+      <div class="empty" id="jobEmpty">Nothing running. Your video will show up here.</div>
+      <div id="jobBody" hidden>
+        <div class="jobhead">
+          <div><h3 id="jobTitle"></h3><small id="jobMeta"></small></div>
+          <button class="ghost" id="cancel" type="button">Cancel</button>
+        </div>
+        <div class="steps" id="steps"></div>
+        <div class="log" id="log" aria-live="polite"></div>
+        <p class="status" id="status"></p>
+      </div>
+    </section>
+    <section class="card" id="playerCard" hidden>
+      <h2 id="playerTitle">Your video</h2>
+      <div class="player">
+        <video id="video" controls playsinline preload="metadata"></video>
+        <p class="summary" id="summary"></p>
+        <div class="links" id="links"></div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<section class="editor" id="editorWrap" hidden>
+  <div class="card" id="editor">
+    <div class="edhead">
+      <div><h2 style="margin:0 0 6px">Edit video</h2><h3 id="edName"></h3></div>
+      <button class="ghost" id="edClose" type="button">Close</button>
+    </div>
+    <div class="tabs" role="tablist">
+      <button type="button" role="tab" data-tab="script" class="on">Script</button>
+      <button type="button" role="tab" data-tab="settings">Settings</button>
+      <button type="button" role="tab" data-tab="pictures">Pictures</button>
+      <button type="button" role="tab" data-tab="ask">Ask Claude</button>
+    </div>
+
+    <div class="pane" id="pane-script">
+      <textarea id="edScript" class="mono" spellcheck="false" aria-label="Script"></textarea>
+      <div class="edcheck" id="edCheck" role="status"></div>
+      <p class="hint">Change the words as you like. Keep each <code>[#s1]</code>-style marker: the pictures wait for it. <code>[loud]words[/loud]</code> makes the voice stronger on those words, <code>{Shown|spoken}</code> fixes a pronunciation, and lines starting with <code>&gt;</code> are notes that are not spoken. Only the scenes whose words changed are voiced again.</p>
+    </div>
+
+    <div class="pane" id="pane-settings" hidden>
+      <div class="setgrid">
+        <label class="field full"><span>Title</span><input type="text" id="setTitle" maxlength="120"></label>
+        <div class="field"><span style="display:block;font-size:13px;color:var(--muted);margin-bottom:6px">Voice</span>
+          <div class="inline"><select id="setVoice"></select><button type="button" class="play" id="setVoicePlay" aria-label="Play a sample of this voice">▶</button></div>
+          <small class="hint" id="setVoiceNote"></small>
+        </div>
+        <div class="field"><span style="display:block;font-size:13px;color:var(--muted);margin-bottom:6px">Speed of the video</span>
+          <div class="rangeval"><input type="range" id="setPace" min="0.8" max="1.4" step="0.05"><b id="setPaceVal"></b></div></div>
+        <div class="field"><span style="display:block;font-size:13px;color:var(--muted);margin-bottom:6px">Music</span>
+          <div class="inline"><select id="setMusicStyle"></select></div>
+          <label style="display:flex;gap:8px;align-items:center;margin-top:8px;font-size:13px;color:var(--muted)"><input type="checkbox" id="setMusicOn"> Music on</label></div>
+        <div class="field"><span style="display:block;font-size:13px;color:var(--muted);margin-bottom:6px">Music volume</span>
+          <div class="rangeval"><input type="range" id="setMusicVol" min="0" max="1" step="0.05"><b id="setMusicVolVal"></b></div></div>
+        <div class="field"><span style="display:block;font-size:13px;color:var(--muted);margin-bottom:6px">Voice emphasis on <code>[loud]</code> words (decibels)</span>
+          <div class="rangeval"><input type="range" id="setEmph" min="0" max="9" step="1"><b id="setEmphVal"></b></div></div>
+      </div>
+    </div>
+
+    <div class="pane" id="pane-pictures" hidden>
+      <div class="pics" id="edPics"></div>
+      <p class="hint" id="edPicsHint">Replace a picture with one of your own (JPEG, PNG or WebP), or ask Claude to make a new one. The undo button brings the old picture back. If a replaced photo came from Wikimedia Commons, it is taken out of the credits.</p>
+    </div>
+
+    <div class="pane" id="pane-ask" hidden>
+      <label class="field"><span>What should change?</span>
+        <textarea id="edAsk" maxlength="3000" placeholder="e.g. Make the opening hook stronger. Or: Redo picture shot05 as a sunrise over the mountains. Or: Add a part about the 2008 crisis after the third scene."></textarea></label>
+      <p class="hint">Claude edits this video only, keeping the rest, then checks and re-renders it. Any changes you made on the other tabs are saved first. This uses your Claude Code plan and usually takes 3 to 10 minutes.</p>
+      <button type="button" class="primary" id="edAskGo" style="width:auto">Apply with Claude</button>
+    </div>
+
+    <div class="edbar">
+      <span class="msg" id="edMsg" role="status"></span>
+      <button type="button" class="ghost" id="edUndo">Undo last change</button>
+      <button type="button" class="ghost" id="edSave">Save</button>
+      <button type="button" class="primary" id="edRender">Save and re-render</button>
+    </div>
+  </div>
+</section>
+
+<section class="lib">
+  <div class="card">
+    <h2>Library</h2>
+    <div class="grid" id="library"></div>
+    <div class="empty" id="libEmpty" hidden>No finished videos yet.</div>
+  </div>
+</section>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const STEPS = [['research', 'Research'], ['script', 'Script'], ['voice', 'Narration'], ['pictures', 'Pictures'], ['scenes', 'Scenes'], ['review', 'Review'], ['render', 'Render']];
+let config = null, current = null, source = null, timer = null, playerSlug = null;
+
+const api = async (url, opts) => {
+  const r = await fetch(url, opts);
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(data.error || `Request failed (${r.status})`);
+  return data;
+};
+const el = (tag, props = {}, ...kids) => { const n = Object.assign(document.createElement(tag), props); n.append(...kids); return n; };
+
+
+async function init() {
+  config = await api('/api/config');
+  const box = $('templates');
+  config.templates.forEach((t, i) => {
+    const titles = { 'cartoon-story': 'Cartoon story', 'code-explainer': 'Code explainer' };
+    const badges = { 'cartoon-story': 'Perchance stills', 'code-explainer': 'Drawn in code' };
+    const label = el('label', { className: 'tpl' },
+      el('input', { type: 'radio', name: 'template', value: t.id, checked: t.id === 'cartoon-story' || (i === 0 && !config.templates.some((x) => x.id === 'cartoon-story')) }),
+      el('div', {}, el('b', { textContent: titles[t.id] || t.id }), el('small', { textContent: t.tagline || t.description.slice(0, 110) }),
+        el('em', { textContent: badges[t.id] || (t.usesPictures ? 'Perchance stills' : 'Drawn in code') })));
+    box.append(label);
+  });
+  const sel = $('voice');
+  buildVoiceSelect();
+  buildVoiceList();
+  buildCloneBox();
+  document.querySelectorAll('input[name=template]').forEach((r) => r.addEventListener('change', updatePictures));
+  updatePictures();
+  sel.addEventListener('change', markVoice);
+  await refreshLibrary();
+  const jobs = await api('/api/jobs');
+  const active = jobs.find((j) => j.status === 'running' || j.status === 'queued') || jobs[0];
+  if (active) watch(active);
+}
+
+$('form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  $('err').textContent = '';
+  $('go').disabled = true;
+  try {
+    const f = new FormData($('form'));
+    if (f.get('scriptMode') !== 'auto' && !$('script').value.trim()) throw new Error(f.get('scriptMode') === 'exact' ? 'Paste your script first.' : 'Paste your outline first, or pick "Write it for me".');
+    const job = await api('/api/jobs', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({
+      topic: $('topic').value, template: f.get('template'), length: f.get('length'), images: $('images').value, voice: $('voice').value, notes: $('notes').value, script: f.get('scriptMode') === 'auto' ? '' : $('script').value, scriptMode: f.get('scriptMode') }) });
+    watch(job);
+    $('job').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  } catch (err) { $('err').textContent = err.message; }
+  $('go').disabled = false;
+});
+
+// "I have a script" skips research and script writing: the video starts at the narration.
+const SCRIPT_MODES = {
+  auto: { box: false },
+  exact: { box: true, label: 'Your script', placeholder: 'Paste the narration exactly as it should be spoken, in the language of the voice you picked. It is used as written.', hint: 'Skips research and script writing: the video starts at the narration. Plain text is fine, no markers needed. About 150 words make a minute. You can still edit it afterwards.', topic: 'Title or topic (optional)', topicRequired: false },
+  outline: { box: true, label: 'Your outline, key points or links', placeholder: 'Key points, facts or links you want covered. The script is written from them.', hint: 'The script is still written for you, around your points.', topic: 'Topic', topicRequired: true },
+};
+function updateScriptMode() {
+  const m = SCRIPT_MODES[new FormData($('form')).get('scriptMode')] || SCRIPT_MODES.auto;
+  $('scriptBox').hidden = !m.box;
+  $('topic').required = m.topicRequired !== false;
+  $('topicLabel').textContent = m.topic || 'Topic';
+  if (m.box) { $('scriptLabel').textContent = m.label; $('script').placeholder = m.placeholder; $('scriptHint').textContent = m.hint; }
+}
+document.querySelectorAll('input[name=scriptMode]').forEach((r) => r.addEventListener('change', updateScriptMode));
+updateScriptMode();
+
+$('cancel').addEventListener('click', () => current && api(`/api/jobs/${current.id}/cancel`, { method: 'POST' }));
+
+function watch(job) {
+  if (source) source.close();
+  clearInterval(timer);
+  current = job;
+  $('jobEmpty').hidden = true; $('jobBody').hidden = false;
+  $('log').textContent = '';
+  $('jobTitle').textContent = job.kind === 'rerender' ? `Re-render: ${job.topic}` : job.kind === 'edit' ? `Edit: ${job.topic}` : job.topic;
+  const tpl = config.templates.find((t) => t.id === job.template);
+  current.pictures = !!tpl?.usesPictures;
+  renderSteps(job.reached || [], job.stage);
+  setStatus(job);
+  const tick = () => {
+    const end = current.endedAt || Date.now(), start = current.startedAt;
+    $('jobMeta').textContent = (job.kind === 'rerender' ? 're-render' : job.kind === 'edit' ? 'edit with Claude' : `${job.template} · ${job.length} · ${(job.voice || '').slice(3)}`) + (start ? ` · ${fmt(end - start)}` : '');
+  };
+  tick(); timer = setInterval(tick, 1000);
+  const jobId = job.id;
+  source = new EventSource(`/api/jobs/${jobId}/events`);
+  source.onmessage = (m) => {
+    const ev = JSON.parse(m.data);
+    if (ev.type === 'log') addLog(ev);
+    if (ev.type === 'stage') { current.stage = ev.stage; current.reached = ev.reached; renderSteps(ev.reached, ev.stage); }
+    if (ev.type === 'status') {
+      // an event's own `id` is its number in the log, never the job's id
+      const { id: _eventNumber, type: _type, ...rest } = ev;
+      Object.assign(current, rest);
+      api(`/api/jobs/${jobId}`).then((j) => { Object.assign(current, j); setStatus(j); tick(); }).catch(() => {});
+      if (ev.status === 'done') { refreshLibrary(); if (ed && ed.slug === job.slug && !editorDirty()) openEditor(ed.slug, true); }
+      if (['done', 'failed', 'cancelled'].includes(ev.status)) { source.close(); clearInterval(timer); tick(); }
+    }
+  };
+}
+
+// ---- the editor ----
+let ed = null;
+const TABS = ['script', 'settings', 'pictures', 'ask'];
+function switchTab(name) {
+  for (const t of TABS) { $(`pane-${t}`).hidden = t !== name; }
+  document.querySelectorAll('.tabs button').forEach((b) => b.classList.toggle('on', b.dataset.tab === name));
+}
+document.querySelectorAll('.tabs button').forEach((b) => b.addEventListener('click', () => switchTab(b.dataset.tab)));
+const edMsg = (text, bad) => { $('edMsg').textContent = text; $('edMsg').className = `msg${bad ? ' bad' : ''}`; };
+
+function readSettingsForm() {
+  return { title: $('setTitle').value.trim(), voice: $('setVoice').disabled ? undefined : $('setVoice').value, pace: Number($('setPace').value),
+    musicOn: $('setMusicOn').checked, musicStyle: $('setMusicStyle').value, musicVolume: Number($('setMusicVol').value), emphasisDb: Number($('setEmph').value) };
+}
+function editorDirty() { return !!ed && ($('edScript').value !== ed.script0 || JSON.stringify(readSettingsForm()) !== ed.set0); }
+function showRangeValues() {
+  $('setPaceVal').textContent = `${Number($('setPace').value).toFixed(2)}×`;
+  $('setMusicVolVal').textContent = `${Math.round(Number($('setMusicVol').value) * 100)}%`;
+  $('setEmphVal').textContent = `+${$('setEmph').value} dB`;
+  $('setMusicStyle').disabled = $('setMusicVol').disabled = !$('setMusicOn').checked;
+}
+['setPace', 'setMusicVol', 'setEmph', 'setMusicOn'].forEach((id) => $(id).addEventListener('input', showRangeValues));
+
+async function openEditor(slug, quiet) {
+  try {
+    const d = await api(`/api/videos/${slug}`);
+    ed = { slug, script0: d.script, set0: '' };
+    $('editorWrap').hidden = false;
+    $('edName').textContent = d.title;
+    $('edScript').value = d.script;
+    const sv = $('setVoice');
+    sv.textContent = '';
+    const st = d.settings;
+    // Kokoro voices only speak their own language, so a video can only switch between voices of its language.
+    config.voices.filter((v) => v.language === (st.language || 'en') && !v.mine).forEach((v) => sv.append(el('option', { value: v.id, textContent: voiceText(v) })));
+    $('setTitle').value = st.title;
+    if (st.voice) sv.value = st.voice;
+    sv.disabled = !st.voice;
+    $('setVoicePlay').disabled = !st.voice;
+    $('setVoiceNote').textContent = st.voiceNote || '';
+    $('setPace').value = st.pace;
+    const ms = $('setMusicStyle');
+    ms.textContent = '';
+    st.musicStyles.forEach((m) => ms.append(el('option', { value: m, textContent: m })));
+    ms.value = st.musicStyle;
+    $('setMusicOn').checked = st.musicOn;
+    $('setMusicVol').value = st.musicVolume;
+    $('setEmph').value = st.emphasisDb;
+    showRangeValues();
+    ed.set0 = JSON.stringify(readSettingsForm());
+    renderPics(d.pictures);
+    $('edUndo').disabled = !d.canUndo;
+    const busy = d.busy;
+    for (const id of ['edSave', 'edRender', 'edAskGo']) $(id).disabled = busy;
+    edMsg(busy ? 'This video is being worked on right now. Editing is back when it finishes.' : '', false);
+    $('edPicsHint').hidden = false;
+    if (!quiet) { switchTab('script'); $('editorWrap').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    runCheck();
+  } catch (e) { alert(`Could not open the editor: ${e.message}`); }
+}
+
+function renderPics(list) {
+  const box = $('edPics');
+  box.textContent = '';
+  if (!list.length) { box.append(el('p', { className: 'hint', textContent: 'This video has no separate pictures (everything is drawn by the template).' })); return; }
+  for (const p of list) {
+    const file = el('input', { type: 'file', accept: 'image/jpeg,image/png,image/webp', hidden: true });
+    file.addEventListener('change', async () => {
+      const f = file.files[0];
+      if (!f) return;
+      edMsg(`Replacing ${p.base}…`);
+      try {
+        const r = await fetch(`/api/videos/${ed.slug}/assets/${p.base}`, { method: 'PUT', headers: { 'content-type': 'application/octet-stream' }, body: f });
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(data.error || `Failed (${r.status})`);
+        renderPics(data.pictures);
+        $('edUndo').disabled = false;
+        edMsg(`Replaced ${p.base}. Use "Save and re-render" to see it in the video.`);
+      } catch (e) { edMsg(e.message, true); }
+      file.value = '';
+    });
+    const redo = el('button', { type: 'button', className: 'ghost', textContent: 'Redo with Claude', onclick: () => { $('edAsk').value = `Redo picture ${p.base}: `; switchTab('ask'); $('edAsk').focus(); } });
+    box.append(el('div', { className: 'pic' }, el('img', { src: `/videos/${ed.slug}/thumb/${p.name}?v=${Math.round(p.mtime)}`, alt: p.base }),
+      el('div', { className: 'cap' }, el('b', { textContent: p.base }), file, el('button', { type: 'button', className: 'ghost', textContent: 'Replace…', onclick: () => file.click() }), redo)));
+  }
+}
+
+let checkTimer = null;
+async function runCheck() {
+  if (!ed) return;
+  const box = $('edCheck');
+  try {
+    const r = await api(`/api/videos/${ed.slug}/script/check`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ text: $('edScript').value }) });
+    box.textContent = '';
+    box.className = `edcheck ${r.ok ? 'ok' : 'bad'}`;
+    box.append(document.createTextNode(r.ok ? `${r.words} words, about ${r.seconds} seconds. The script reads fine.` : 'This script cannot be used yet:'));
+    for (const m of r.errors) box.append(el('span', { className: 'bad', textContent: m }));
+    for (const m of r.warnings) box.append(el('span', { className: 'warn', textContent: m }));
+  } catch (e) { box.textContent = e.message; box.className = 'edcheck bad'; }
+}
+$('edScript').addEventListener('input', () => { clearTimeout(checkTimer); checkTimer = setTimeout(runCheck, 400); });
+
+async function saveAll() {
+  const put = (url, body) => api(url, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+  edMsg('Saving…');
+  try {
+    if ($('edScript').value !== ed.script0) { await put(`/api/videos/${ed.slug}/script`, { text: $('edScript').value }); ed.script0 = $('edScript').value; }
+    const now = JSON.stringify(readSettingsForm());
+    if (now !== ed.set0) { const body = readSettingsForm(); if (body.voice === undefined) delete body.voice; await put(`/api/videos/${ed.slug}/settings`, body); ed.set0 = now; $('edName').textContent = body.title; }
+    $('edUndo').disabled = false;
+    edMsg('Saved.');
+    return true;
+  } catch (e) { edMsg(e.message, true); runCheck(); return false; }
+}
+$('edSave').addEventListener('click', saveAll);
+$('edRender').addEventListener('click', async () => {
+  if (!(await saveAll())) return;
+  try { const job = await api(`/api/videos/${ed.slug}/rerender`, { method: 'POST' }); watch(job); $('job').scrollIntoView({ behavior: 'smooth', block: 'nearest' }); edMsg('Re-rendering. Progress is on the right.'); } catch (e) { edMsg(e.message, true); }
+});
+$('edAskGo').addEventListener('click', async () => {
+  const text = $('edAsk').value.trim();
+  if (text.length < 5) { edMsg('Say what should change.', true); return; }
+  if (!(await saveAll())) return;
+  try { const job = await api(`/api/videos/${ed.slug}/edit`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ instruction: text }) }); watch(job); $('job').scrollIntoView({ behavior: 'smooth', block: 'nearest' }); edMsg('Claude is working on it. Progress is on the right.'); $('edAsk').value = ''; } catch (e) { edMsg(e.message, true); }
+});
+$('edUndo').addEventListener('click', async () => {
+  try { const r = await api(`/api/videos/${ed.slug}/restore`, { method: 'POST' }); await openEditor(ed.slug, true); edMsg(`Undone (${r.restored.length} file${r.restored.length === 1 ? '' : 's'} restored). Use "Save and re-render" to rebuild the video.`); } catch (e) { edMsg(e.message, true); }
+});
+$('edClose').addEventListener('click', () => {
+  if (editorDirty() && !confirm('You have changes that are not saved. Close anyway?')) return;
+  ed = null; $('editorWrap').hidden = true;
+});
+$('setVoicePlay').addEventListener('click', () => { const b = $('setVoicePlay'); b.dataset.name = nice($('setVoice').value); playVoice($('setVoice').value, b); });
+window.addEventListener('beforeunload', (e) => { if (editorDirty()) { e.preventDefault(); e.returnValue = ''; } });
+
+// The picture-maker choice only matters for templates that use AI pictures.
+function updatePictures() {
+  const id = document.querySelector('input[name=template]:checked')?.value;
+  const t = config.templates.find((x) => x.id === id);
+  $('images').value = 'perchance';
+  const note = $('imgModeNote');
+  if (!note) return;
+  if (t?.usesPictures) {
+    note.innerHTML = '<strong>Perchance</strong> — free AI stills in a Chrome window. No API key.';
+  } else {
+    note.innerHTML = '<strong>Drawn in code</strong> — frames are built in scenes.js (text, icons, layout). No AI pictures.';
+  }
+}
+
+$('cloneSave').addEventListener('click', async () => {
+  const msg = $('cloneMsg'), file = $('cloneFile').files[0], name = $('cloneName').value.trim().toLowerCase();
+  msg.textContent = '';
+  if (!file) { msg.textContent = 'Choose a recording first.'; return; }
+  const btn = $('cloneSave'); btn.disabled = true; msg.textContent = 'Saving…';
+  try {
+    const v = await api(`/api/my-voices?name=${encodeURIComponent(name)}&text=${encodeURIComponent($('cloneText').value)}`, { method: 'POST', headers: { 'content-type': 'application/octet-stream' }, body: file });
+    await refreshVoices(v.id);
+    $('cloneName').value = ''; $('cloneFile').value = ''; $('cloneText').value = '';
+    msg.textContent = `Saved ${nice(v.id)}. It is selected for the next video; press its play button to hear it.`;
+  } catch (e) { msg.textContent = e.message; } finally { btn.disabled = false; }
+});
+
+$('voxSave').addEventListener('click', async () => {
+  const msg = $('voxMsg'), file = $('voxFile').files[0], name = $('voxName').value.trim().toLowerCase();
+  msg.textContent = '';
+  if (!file) { msg.textContent = 'Choose a recording first.'; return; }
+  const btn = $('voxSave'); btn.disabled = true; msg.textContent = 'Saving…';
+  try {
+    const v = await api(`/api/voxcpm-voices?name=${encodeURIComponent(name)}`, { method: 'POST', headers: { 'content-type': 'application/octet-stream' }, body: file });
+    await refreshVoices(v.id);
+    $('voxName').value = ''; $('voxFile').value = '';
+    msg.textContent = `Saved ${nice(v.id)}. It is selected for the next video; press its play button to hear it.`;
+  } catch (e) { msg.textContent = e.message; } finally { btn.disabled = false; }
+});
+
+// ---- voice samples ----
+const player = new Audio();
+let playingBtn = null;
+const cap = (t) => t.replace(/^./, (c) => c.toUpperCase());
+// Kokoro ids look like af_heart; a cloned voice is my_<name>; the Hindi F5 voice is just f5.
+const nice = (id) => (id.startsWith('vxd_') ? (config.voices.find((v) => v.id === id)?.label || cap(id.slice(4))) + ' (VoxCPM)' : id.startsWith('vx_') ? cap(id.slice(3)) + ' (VoxCPM clone)' : id.startsWith('my_') ? cap(id.slice(3)) + ' (cloned)' : id[2] === '_' ? cap(id.slice(3)) : id.toUpperCase());
+const voiceText = (v) => (v.preset ? `${nice(v.id)} · ${v.design}` : `${nice(v.id)} · ${v.label.replace(' English', '').replace(', ', ' ')}`);
+const LANGUAGE_NAMES = { en: 'English', hi: 'Hindi' };
+// The languages that have voices, English first, as [code, name].
+const voiceLanguages = () => [...new Set(config.voices.map((v) => v.language))].map((c) => [c, LANGUAGE_NAMES[c] || c]);
+function resetPlay() { if (playingBtn) { playingBtn.textContent = '▶'; playingBtn.classList.remove('on'); playingBtn.setAttribute('aria-label', playingBtn.dataset.name + ': play sample'); } playingBtn = null; }
+player.addEventListener('ended', resetPlay);
+player.addEventListener('pause', () => { if (player.ended || player.currentTime > 0) resetPlay(); });
+
+function buildVoiceSelect(keep) {
+  const sel = $('voice');
+  sel.textContent = '';
+  for (const [lang, name] of voiceLanguages()) {
+    const group = el('optgroup', { label: name });
+    config.voices.filter((v) => v.language === lang && !v.voxcpm).forEach((v) => group.append(el('option', { value: v.id, textContent: voiceText(v), selected: v.id === (keep || 'bm_george') })));
+    if (group.children.length) sel.append(group);
+  }
+  const zx = config.voices.filter((v) => v.voxcpm);
+  if (zx.length) {
+    const group = el('optgroup', { label: 'VoxCPM2 voices' });
+    zx.forEach((v) => group.append(el('option', { value: v.id, textContent: voiceText(v), selected: v.id === keep })));
+    sel.append(group);
+  }
+}
+// Reloads the voice lists after a cloned voice was added or removed.
+async function refreshVoices(keep) {
+  config = await api('/api/config');
+  buildVoiceSelect(keep || $('voice').value);
+  buildVoiceList();
+  buildCloneBox();
+}
+function buildCloneBox() {
+  $('cloneBox').style.display = config.voiceCloning ? '' : 'none';
+  $('voxBox').style.display = config.voxcpmCloning ? '' : 'none';
+}
+
+function buildVoiceList() {
+  const list = $('vlist'), xlist = $('xlist');
+  list.textContent = '';
+  xlist.textContent = '';
+  const langs = voiceLanguages();
+  for (const v of langs.flatMap(([lang]) => config.voices.filter((x) => x.language === lang))) {
+    if (!v.voxcpm && langs.length > 1 && !list.querySelector(`[data-lang="${v.language}"]`)) {
+      const head = el('div', { className: 'vhead', textContent: LANGUAGE_NAMES[v.language] || v.language });
+      head.dataset.lang = v.language;
+      list.append(head);
+    }
+    const play = el('button', { type: 'button', className: 'play', textContent: '▶' });
+    play.dataset.name = nice(v.id);
+    play.setAttribute('aria-label', `${nice(v.id)}: play sample`);
+    play.addEventListener('click', () => playVoice(v.id, play));
+    const use = el('button', { type: 'button', className: 'ghost use', textContent: 'Use' });
+    use.addEventListener('click', () => { $('voice').value = v.id; markVoice(); });
+    const row = el('div', { className: 'vrow' }, play,
+      el('div', { className: 'who' }, nice(v.id), el('small', { textContent: v.label.replace(' English', '').replace(', ', ' · ') })), use);
+    if (v.mine && !v.preset) {
+      const del = el('button', { type: 'button', className: 'ghost use', textContent: 'Delete', title: 'Delete this cloned voice' });
+      del.addEventListener('click', async () => {
+        if (!confirm(`Delete the cloned voice ${nice(v.id)}? Videos already made with it keep their own copy.`)) return;
+        try { await api(`/api/${v.voxcpm ? 'voxcpm-voices' : 'my-voices'}/${v.id.slice(3)}`, { method: 'DELETE' }); await refreshVoices($('voice').value === v.id ? 'hf_alpha' : undefined); } catch (e) { $('vmsg').textContent = e.message; }
+      });
+      row.append(del);
+    }
+    row.dataset.id = v.id;
+    (v.voxcpm ? xlist : list).append(row);
+  }
+  markVoice();
+}
+function markVoice() {
+  for (const row of $('vlist').querySelectorAll('.vrow')) {
+    const on = row.dataset.id === $('voice').value;
+    row.classList.toggle('sel', on);
+    row.querySelector('.use').textContent = on ? 'Selected' : 'Use';
+  }
+}
+async function playVoice(id, btn) {
+  $('vmsg').textContent = '';
+  const wasThis = playingBtn === btn;
+  player.pause(); resetPlay();
+  if (wasThis) return;
+  btn.textContent = '…'; btn.classList.add('on');
+  try {
+    player.src = `/api/voices/${id}/sample.wav`;
+    playingBtn = btn;
+    await player.play();
+    btn.textContent = '■'; btn.setAttribute('aria-label', `${btn.dataset.name}: stop`);
+  } catch (e) {
+    resetPlay();
+    $('vmsg').textContent = `Could not play ${nice(id)}: ${e.message}`;
+  }
+}
+
+const fmt = (ms) => { const s = Math.round(ms / 1000); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
+
+function renderSteps(reached, now) {
+  const box = $('steps'); box.textContent = '';
+  const live = current && ['running', 'queued'].includes(current.status);
+  // A job with the user's own script has no research or script-writing steps.
+  const steps = current?.kind === 'rerender' ? [['voice', 'Narration'], ['review', 'Check'], ['render', 'Render']]
+    : current?.skipScript ? [['yours', 'Your script'], ...STEPS.slice(2)] : STEPS;
+  for (const [id, label] of steps) {
+    if (id === 'pictures' && current && current.kind === 'create' && !current.pictures) continue;
+    const cls = id === now && live ? 'now' : id === 'yours' || reached.includes(id) || now === 'done' || (now === 'verify' && id === 'render') ? 'done' : '';
+    box.append(el('span', { className: `step ${cls}`, textContent: label }));
+  }
+}
+
+function addLog(ev) {
+  const log = $('log');
+  const stick = log.scrollTop + log.clientHeight >= log.scrollHeight - 30;
+  log.append(el('div', { className: ev.kind, textContent: ev.kind === 'tool' ? `${ev.name}  ${ev.text}` : ev.text }));
+  if (stick) log.scrollTop = log.scrollHeight;
+}
+
+function setStatus(j) {
+  const s = $('status');
+  s.className = `status ${j.status}`;
+  const text = { queued: j.queuePosition ? `Waiting in line (${j.queuePosition} ahead)` : 'Waiting to start', running: 'Working. You can leave this page open or come back later.',
+    done: 'Finished.', failed: `Failed. ${j.error || ''}`, cancelled: 'Cancelled.' }[j.status] || '';
+  s.textContent = text;
+  $('cancel').hidden = !['running', 'queued'].includes(j.status);
+  if (j.status === 'done') showVideo(j.slug, j.topic, j.summary);
+}
+
+function showVideo(slug, title, summary) {
+  $('playerCard').hidden = false;
+  $('playerTitle').textContent = title || slug;
+  const v = $('video');
+  v.poster = `/videos/${slug}/video.cover.jpg`;
+  v.src = `/videos/${slug}/video.mp4?t=${Date.now()}`;
+  const plain = (summary || '').replace(/\[([^\]]+)\]\([^)]*\)/g, '$1').replace(/[`*]/g, '').replace(/\s*\(\s*\)/g, '').trim();
+  $('summary').textContent = plain.length > 420 ? plain.slice(0, 420).replace(/\s+\S*$/, '') + '…' : plain;
+  const links = $('links'); links.textContent = '';
+  playerSlug = slug;
+  links.append(
+    el('button', { className: 'ghost', type: 'button', textContent: 'Edit this video', onclick: () => openEditor(slug) }),
+    el('a', { href: `/videos/${slug}/video.mp4?download`, textContent: 'Download MP4' }),
+    el('a', { href: `/videos/${slug}/video.srt?download`, textContent: 'Subtitles (.srt)' }),
+    el('a', { href: `/videos/${slug}/video.cover.jpg?download`, textContent: 'Cover image' }));
+  $('playerCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+async function refreshLibrary() {
+  const list = await api('/api/videos');
+  const grid = $('library'); grid.textContent = '';
+  $('libEmpty').hidden = list.length > 0;
+  for (const v of list) {
+    const thumb = el('div', { className: 'thumb', textContent: v.cover ? '' : '▶' });
+    if (v.cover) thumb.style.backgroundImage = `url(/videos/${v.slug}/video.cover.jpg?v=${Math.round(v.mtime)})`;
+    const btn = el('button', { className: 'vid', type: 'button' }, thumb,
+      el('div', { className: 't' }, v.title, el('small', { textContent: new Date(v.mtime).toLocaleDateString() + ` · ${(v.bytes / 1048576).toFixed(1)} MB` })));
+    btn.addEventListener('click', () => showVideo(v.slug, v.title, ''));
+    const edit = el('button', { className: 'ghost edit', type: 'button', textContent: 'Edit' });
+    edit.addEventListener('click', () => openEditor(v.slug));
+    grid.append(el('div', { className: 'vcell' }, btn, edit));
+  }
+}
+
+init().catch((e) => { $('err').textContent = `Could not load: ${e.message}`; });
+</script>
+</body>
+</html>

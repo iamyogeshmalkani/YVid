@@ -1,21 +1,26 @@
 # YVid
 
-Short **cartoon story** videos made by your AI coding agent.
+Short narrated videos made by your AI coding agent — **cartoon stories** or **code-drawn explainers**.
 
 Free and open source. Voice, timing and rendering run on your computer.
 Built on [explainroo](https://github.com/vincentsch/explainroo) (MIT).
 
 ## Make a video
 
-Copy this into Claude Code, Codex, Cursor, or any coding agent, and put your topic in place of the brackets:
+Copy this into Claude Code, Codex, Cursor, or any coding agent:
 
 ```text
-Make me a short cartoon story video about [your topic].
+Make me a short video about [your topic].
 Use YVid for it: clone https://github.com/iamyogeshmalkani/YVid,
-read its AGENTS.md and follow the steps. Always use the cartoon-story template.
+read its AGENTS.md and follow the steps.
+Use the cartoon-story template for cartoon stills, or code-explainer for diagrams drawn in code.
 ```
 
-The agent clones the repo, runs setup, writes the story, makes the pictures, and leaves you an MP4 in `videos/<name>/out/`.
+Or open **YVid Studio** after setup:
+
+```bash
+node ui/server.mjs    # http://127.0.0.1:4747
+```
 
 ## Setup (once, on a Mac)
 
@@ -33,28 +38,30 @@ In every new terminal:
 . ./env.sh
 ```
 
-## Make a video by hand
+## Templates
+
+| Template | What you get | Pictures |
+|---|---|---|
+| `cartoon-story` | Fast cartoon short, new still almost every phrase | **Perchance** (free, no key) |
+| `code-explainer` | Steps, diagrams, UI, type-led teaching | **Drawn in code** in `scenes.js` |
 
 ```bash
 scripts/new-video.sh cartoon-story my-story
-# edit videos/my-story/script.md and shots.js
-# then follow templates/cartoon-story/README.md
+scripts/new-video.sh code-explainer my-topic
 ```
 
 ## What is in here
 
 | Path | What it is |
 |---|---|
-| `templates/cartoon-story/` | the only template: fast cartoon shorts with a new picture almost every phrase |
+| `templates/` | the two templates above |
+| `ui/` | YVid Studio (local web UI) |
 | `AGENTS.md` | rules for the coding agent |
-| `bin/`, `src/`, `engine/` | the explainroo engine (voice, timing, render) |
-| `videos/` | your projects (git-ignored); created by `new-video.sh` |
+| `bin/`, `src/`, `engine/` | the explainroo engine |
+| `videos/` | your projects (git-ignored) |
 
-Pictures in YVid use one of two paths only (see [SETUP-IMAGES.md](SETUP-IMAGES.md)):
-
-1. **Perchance** — free AI stills in Chrome, no API key (`--perchance`)
-2. **Code** — draw the frame yourself in `scenes.js` with the engine’s layout, text, shapes and HTML/CSS-style UI (no image model)
+See [SETUP-IMAGES.md](SETUP-IMAGES.md) for Perchance vs code-drawn pictures.
 
 ## License
 
-MIT. Engine copyright Vincent Schmalbach (explainroo). YVid packaging and the cartoon-story template adaptations are under the same license.
+MIT. Engine copyright Vincent Schmalbach (explainroo). YVid packaging and templates are under the same license.

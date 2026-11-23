@@ -13,5 +13,7 @@ echo "3/3  voice and speech-check models (about 400 MB, first time only; slow co
 node bin/explainroo.js doctor --fetch || true
 echo
 echo "Done. In each new terminal run:   . ./env.sh"
-echo "Then:  scripts/new-video.sh cartoon-story <name>"
-echo "See README.md and templates/cartoon-story/README.md."
+echo "Studio:  node ui/server.mjs   →  http://127.0.0.1:4747"
+echo "Or:      scripts/new-video.sh cartoon-story <name>"
+echo "         scripts/new-video.sh code-explainer <name>"
+echo "See README.md."
