@@ -13,7 +13,7 @@ Copy this into Claude Code, Codex, Cursor, or any coding agent:
 Make me a short video about [your topic].
 Use YVid for it: clone https://github.com/iamyogeshmalkani/YVid,
 read its AGENTS.md and follow the steps.
-Use the cartoon-story template for cartoon stills, or code-explainer for diagrams drawn in code.
+Pick a template: cartoon-story (cartoon stills), dark-history (cinematic history paintings), or code-explainer (diagrams drawn in code).
 ```
 
 Or open **YVid Studio** after setup:
@@ -43,10 +43,12 @@ In every new terminal:
 | Template | What you get | Pictures |
 |---|---|---|
 | `cartoon-story` | Fast cartoon short, new still almost every phrase | **Perchance** (free, no key) |
+| `dark-history` | Cinematic history short: dark oil paintings, slow push, captions | **Perchance** paintings |
 | `code-explainer` | Steps, diagrams, UI, type-led teaching | **Drawn in code** in `scenes.js` |
 
 ```bash
 scripts/new-video.sh cartoon-story my-story
+scripts/new-video.sh dark-history my-battle
 scripts/new-video.sh code-explainer my-topic
 ```
 

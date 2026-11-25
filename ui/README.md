@@ -15,6 +15,7 @@ Needs Node setup (`sh setup.sh`) and the `claude` CLI (Claude Code, logged in). 
 | Template | Pictures |
 |---|---|
 | **Cartoon story** | Perchance AI stills |
+| **Dark history** | Perchance cinematic paintings |
 | **Code explainer** | Drawn in `scenes.js` (no AI images) |
 
 ## Notes

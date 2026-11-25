@@ -24,7 +24,7 @@ const SAMPLES = path.join(HERE, 'cache/voices');
 const PORT = Number(process.env.PORT) || 4747;
 const HOST = '127.0.0.1';
 const CLAUDE = process.env.CLAUDE_BIN || 'claude';
-const ALLOWED_TEMPLATES = new Set(['cartoon-story', 'code-explainer']);
+const ALLOWED_TEMPLATES = new Set(['cartoon-story', 'code-explainer', 'dark-history']);
 
 // ---------- environment for explainroo (same as env.sh) ----------
 

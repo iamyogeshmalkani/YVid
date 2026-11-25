@@ -5,9 +5,10 @@ YVid supports **only** these two ways to make what appears on screen.
 | Template | Method |
 |---|---|
 | `cartoon-story` | Perchance AI stills |
+| `dark-history` | Perchance AI paintings |
 | `code-explainer` | Code in `scenes.js` (no image model) |
 
-## 1. Perchance (AI stills) — for `cartoon-story`
+## 1. Perchance (AI stills) — for `cartoon-story` and `dark-history`
 
 Free. No API key. Needs Google Chrome open on this Mac.
 

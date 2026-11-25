@@ -3,15 +3,18 @@
 YVid makes short narrated videos with your coding agent.
 The engine underneath is [explainroo](https://github.com/vincentsch/explainroo) (MIT).
 
-**Use only these two templates.** Do not invent others.
+**Use only these templates.** Do not invent others.
 
 | Template | When | Pictures |
 |---|---|---|
 | `cartoon-story` | cartoon shorts with a cast and fast cuts | Perchance AI stills |
+| `dark-history` | cinematic dark history shorts (oil paintings, push-in, captions) | Perchance paintings |
 | `code-explainer` | steps, diagrams, UI, teaching with type | drawn in `scenes.js` (no AI images) |
 
 ```bash
 scripts/new-video.sh cartoon-story <name>
+# or
+scripts/new-video.sh dark-history <name>
 # or
 scripts/new-video.sh code-explainer <name>
 # then follow that template's README.md and TEMPLATE.md
@@ -100,13 +103,15 @@ When you ask, put everything you need in one message. Typical reasons to ask:
    ```bash
    scripts/new-video.sh cartoon-story <name>     # Perchance cartoon stills
    # or
+   scripts/new-video.sh dark-history <name>      # Perchance cinematic history paintings
+   # or
    scripts/new-video.sh code-explainer <name>    # code-drawn scenes.js
    ```
 
    Projects go in `videos/`. Git ignores that folder. Read that template’s
    `README.md` and `TEMPLATE.md` and follow those steps. Prefer
-   `cartoon-story` when the user wants cartoon pictures; prefer
-   `code-explainer` for diagrams, product UI or type-led explainers.
+   `cartoon-story` for cartoon pictures, `dark-history` for grim/cinematic
+   history, and `code-explainer` for diagrams, product UI or type-led explainers.
 
 3. **Write `script.md`.** The narration comes first. It sets the timing for
    everything else. See "How to write the narration" below.
@@ -581,7 +586,7 @@ YVid has **two** ways to put pictures on screen. Use only these.
 ### 1. Perchance (AI stills, free, no key)
 
 `--model perchance` opens perchance.org in a Chrome window and saves PNGs.
-No API key. For the cartoon-story template, prefer the project script:
+No API key. For `cartoon-story` and `dark-history`, prefer the project script:
 
 ```bash
 node videos/<name>/scripts/shot-images.mjs videos/<name> --perchance

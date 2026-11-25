@@ -82,8 +82,7 @@
   textarea:focus, input:focus, select:focus {
     border-color: #9eb0c4; box-shadow: 0 0 0 3px rgba(15,122,108,.14);
   }
-  .templates { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
-  @media (max-width: 560px) { .templates { grid-template-columns: 1fr; } }
+  .templates { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-bottom: 18px; }
   .tpl { position: relative; cursor: pointer; }
   .tpl input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
   .tpl div {
@@ -383,8 +382,8 @@ async function init() {
   config = await api('/api/config');
   const box = $('templates');
   config.templates.forEach((t, i) => {
-    const titles = { 'cartoon-story': 'Cartoon story', 'code-explainer': 'Code explainer' };
-    const badges = { 'cartoon-story': 'Perchance stills', 'code-explainer': 'Drawn in code' };
+    const titles = { 'cartoon-story': 'Cartoon story', 'code-explainer': 'Code explainer', 'dark-history': 'Dark history' };
+    const badges = { 'cartoon-story': 'Perchance stills', 'code-explainer': 'Drawn in code', 'dark-history': 'Perchance paintings' };
     const label = el('label', { className: 'tpl' },
       el('input', { type: 'radio', name: 'template', value: t.id, checked: t.id === 'cartoon-story' || (i === 0 && !config.templates.some((x) => x.id === 'cartoon-story')) }),
       el('div', {}, el('b', { textContent: titles[t.id] || t.id }), el('small', { textContent: t.tagline || t.description.slice(0, 110) }),

@@ -15,5 +15,6 @@ echo
 echo "Done. In each new terminal run:   . ./env.sh"
 echo "Studio:  node ui/server.mjs   →  http://127.0.0.1:4747"
 echo "Or:      scripts/new-video.sh cartoon-story <name>"
+echo "         scripts/new-video.sh dark-history <name>"
 echo "         scripts/new-video.sh code-explainer <name>"
 echo "See README.md."
